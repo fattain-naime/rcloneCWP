@@ -1,0 +1,13 @@
+# Non-project workspace files (not part of the module itself)
+.claude/
+.remember/
+rules/
+logs/
+CLAUDE_CODE_MASTER_PROMPT.txt
+
+# OS/editor junk
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
