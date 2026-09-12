@@ -70,10 +70,9 @@ $csrfToken = CSRF::generateToken();
                         <i class="fa fa-history"></i> Restore
                     </a>
                 </li>
-                <li class="disabled">
-                    <a href="#tab-schedules" title="Coming in Phase 5" style="color: #888;">
+                <li>
+                    <a href="#tab-schedules" data-toggle="tab" style="font-weight: 600;">
                         <i class="fa fa-calendar"></i> Schedules
-                        <span class="badge" style="background: #ccc; font-size: 10px;">Phase 5</span>
                     </a>
                 </li>
                 <li>
@@ -107,15 +106,9 @@ $csrfToken = CSRF::generateToken();
                     <?php require __DIR__ . '/restore.php'; ?>
                 </div>
 
-                <!-- TAB 5: SCHEDULES (PREVIEW) -->
+                <!-- TAB 5: SCHEDULES -->
                 <div class="tab-pane" id="tab-schedules">
-                    <div class="alert alert-info text-center" style="padding: 40px 20px;">
-                        <i class="fa fa-calendar fa-3x" style="color: #31708f; margin-bottom: 15px;"></i>
-                        <h4>Automated Schedules & Retention (Phase 5)</h4>
-                        <p class="text-muted" style="max-width: 500px; margin: 0 auto 15px auto;">
-                            Phase 5 will provide automated cron scheduling, GFS (Grandfather-Father-Son) retention policies, and automatic pruning of expired cloud backups.
-                        </p>
-                    </div>
+                    <?php require __DIR__ . '/schedules.php'; ?>
                 </div>
 
                 <!-- TAB 6: LOGS -->

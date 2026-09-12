@@ -122,12 +122,13 @@ chmod 644 "$MODULES_DIR/rcloneCWP.php"
 ok "Module entry deployed"
 
 log "Deploying runtime files to $HOME_DIR..."
-mkdir -p "$HOME_DIR/lib" "$HOME_DIR/sql" "$HOME_DIR/views"
+mkdir -p "$HOME_DIR/lib" "$HOME_DIR/sql" "$HOME_DIR/views" "$HOME_DIR/cron"
 for f in config.php bootstrap.php install.php uninstall.php; do
     cp "$TMP_DIR/repo/$f" "$HOME_DIR/$f"
 done
 cp -r "$TMP_DIR/repo/lib/"* "$HOME_DIR/lib/"
 cp -r "$TMP_DIR/repo/views/"* "$HOME_DIR/views/"
+cp -r "$TMP_DIR/repo/cron/"* "$HOME_DIR/cron/"
 cp "$TMP_DIR/repo/sql/install.sql" "$HOME_DIR/sql/"
 chmod 700 "$HOME_DIR"
 chmod 644 "$HOME_DIR/config.php" "$HOME_DIR/bootstrap.php" "$HOME_DIR/sql/install.sql"
@@ -135,8 +136,10 @@ find "$HOME_DIR/lib" -type d -exec chmod 755 {} +
 find "$HOME_DIR/lib" -type f -exec chmod 644 {} +
 find "$HOME_DIR/views" -type d -exec chmod 755 {} +
 find "$HOME_DIR/views" -type f -exec chmod 644 {} +
+find "$HOME_DIR/cron" -type d -exec chmod 755 {} +
+find "$HOME_DIR/cron" -type f -exec chmod 755 {} +
 chmod 700 "$HOME_DIR/install.php" "$HOME_DIR/uninstall.php"
-chmod 755 "$HOME_DIR/lib" "$HOME_DIR/sql" "$HOME_DIR/views"
+chmod 755 "$HOME_DIR/lib" "$HOME_DIR/sql" "$HOME_DIR/views" "$HOME_DIR/cron"
 ok "Runtime files deployed"
 
 # ============================================================================

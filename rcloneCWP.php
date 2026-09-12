@@ -43,6 +43,10 @@ use CWP\RcloneCWP\Destinations\DestinationManager;
 use CWP\RcloneCWP\Logger;
 use CWP\RcloneCWP\Restore\RestoreEngine;
 use CWP\RcloneCWP\Restore\SnapshotBrowser;
+use CWP\RcloneCWP\Scheduling\CronParser;
+use CWP\RcloneCWP\Scheduling\CrontabService;
+use CWP\RcloneCWP\Scheduling\RetentionManager;
+use CWP\RcloneCWP\Scheduling\ScheduleManager;
 use CWP\RcloneCWP\Validator;
 
 // ============================================================================
@@ -63,6 +67,8 @@ if (!empty($_REQUEST['ajax'])) {
         $discovery = new CwpAccountDiscovery($db);
         $restoreEngine = new RestoreEngine($db, $dm, $logger);
         $snapshotBrowser = new SnapshotBrowser($db, $dm, $logger);
+        $scheduleManager = new ScheduleManager($db);
+        $retentionManager = new RetentionManager($db, $dm, $logger);
         $action = trim($_REQUEST['action'] ?? '');
 
         // CSRF validation helper for state-mutating actions
@@ -336,6 +342,108 @@ if (!empty($_REQUEST['ajax'])) {
                        "ORDER BY b.id DESC LIMIT " . $limit;
                 $restores = $db->fetchAll($sql);
                 echo json_encode(['ok' => true, 'restores' => $restores]);
+                exit();
+
+            // ----------------------------------------------------------------
+            // PHASE 5: SCHEDULING & RETENTION ACTIONS
+            // ----------------------------------------------------------------
+            case 'list_schedules':
+                $schedules = $scheduleManager->listSchedules();
+                echo json_encode(['ok' => true, 'schedules' => $schedules]);
+                exit();
+
+            case 'get_schedule':
+                $schedId = (int)($_REQUEST['id'] ?? 0);
+                $sched = $scheduleManager->getSchedule($schedId);
+                if (!$sched) {
+                    echo json_encode(['ok' => false, 'error' => 'Schedule not found.']);
+                    exit();
+                }
+                echo json_encode(['ok' => true, 'schedule' => $sched]);
+                exit();
+
+            case 'save_schedule':
+                $verifyCsrf();
+                $id       = (int)($_POST['id'] ?? 0);
+                $jobId    = (int)($_POST['job_id'] ?? 0);
+                $cron     = trim($_POST['cron_expression'] ?? '');
+                $timezone = trim($_POST['timezone'] ?? 'UTC');
+                $active   = !empty($_POST['active']) ? 1 : 0;
+
+                if ($id > 0) {
+                    $saveRes = $scheduleManager->updateSchedule($id, [
+                        'cron_expression' => $cron,
+                        'timezone'        => $timezone,
+                        'active'          => $active,
+                    ]);
+                } else {
+                    $saveRes = $scheduleManager->createSchedule([
+                        'job_id'          => $jobId,
+                        'cron_expression' => $cron,
+                        'timezone'        => $timezone,
+                        'active'          => $active,
+                    ]);
+                }
+                echo json_encode($saveRes);
+                exit();
+
+            case 'delete_schedule':
+                $verifyCsrf();
+                $schedId = (int)($_POST['id'] ?? 0);
+                echo json_encode($scheduleManager->deleteSchedule($schedId));
+                exit();
+
+            case 'toggle_schedule':
+                $verifyCsrf();
+                $schedId = (int)($_POST['id'] ?? 0);
+                $active  = !empty($_POST['active']);
+                echo json_encode($scheduleManager->toggleActive($schedId, $active));
+                exit();
+
+            case 'preview_cron':
+                $cron = trim($_REQUEST['cron_expression'] ?? '');
+                $tz   = trim($_REQUEST['timezone'] ?? 'UTC');
+                if (!CronParser::isValid($cron)) {
+                    echo json_encode(['ok' => false, 'error' => 'Invalid cron expression format.']);
+                    exit();
+                }
+                try {
+                    $nextRuns = CronParser::nextRuns($cron, 5, $tz);
+                    $formatted = [];
+                    foreach ($nextRuns as $dt) {
+                        $formatted[] = $dt->format('Y-m-d H:i:s T');
+                    }
+                    echo json_encode(['ok' => true, 'next_runs' => $formatted]);
+                } catch (\Exception $e) {
+                    echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+                }
+                exit();
+
+            case 'prune_retention':
+                $verifyCsrf();
+                $jobId = (int)($_POST['job_id'] ?? 0);
+                $options = [
+                    'policy'         => $_POST['policy'] ?? 'days',
+                    'retention_days' => !empty($_POST['retention_days']) ? (int)$_POST['retention_days'] : null,
+                    'keep_count'     => !empty($_POST['keep_count']) ? (int)$_POST['keep_count'] : null,
+                    'dry_run'        => !empty($_POST['dry_run']),
+                ];
+                $pruneRes = $bjm->pruneExpiredBackups($jobId, array_filter($options));
+                echo json_encode($pruneRes);
+                exit();
+
+            case 'get_crontab_status':
+                echo json_encode(['ok' => true, 'status' => CrontabService::getStatus()]);
+                exit();
+
+            case 'install_crontab':
+                $verifyCsrf();
+                echo json_encode(CrontabService::install());
+                exit();
+
+            case 'uninstall_crontab':
+                $verifyCsrf();
+                echo json_encode(CrontabService::uninstall());
                 exit();
 
             default:

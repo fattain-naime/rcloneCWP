@@ -320,6 +320,36 @@ class BackupJobManager
     }
 
     /**
+     * Get all schedules configured for a specific backup job.
+     *
+     * @param int $jobId
+     * @return array
+     */
+    public function getJobSchedules(int $jobId): array
+    {
+        return $this->db->fetchAll(
+            'SELECT * FROM rclone_schedules WHERE job_id = ? ORDER BY id ASC',
+            [$jobId]
+        );
+    }
+
+    /**
+     * Run retention pruning for a specific job or all jobs.
+     *
+     * @param int $jobId 0 for all jobs
+     * @param array $options
+     * @return array
+     */
+    public function pruneExpiredBackups(int $jobId = 0, array $options = []): array
+    {
+        $rm = new \CWP\RcloneCWP\Scheduling\RetentionManager($this->db, $this->dm, $this->logger);
+        if ($jobId > 0) {
+            return $rm->pruneJobBackups($jobId, $options);
+        }
+        return $rm->pruneAllJobs($options);
+    }
+
+    /**
      * Helper to safely parse source_path into accounts and components.
      *
      * @param string $sourcePath

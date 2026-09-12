@@ -522,13 +522,13 @@ HTML;
     }
 
     /**
-     * Remove cron entries (placeholder for Phase 5)
+     * Remove cron entries (/etc/cron.d/rclonecwp)
      *
      * @return array ['ok' => bool, 'message' => string]
      */
     private function removeCronEntries()
     {
-        return ['ok' => true, 'message' => 'Cron entries not implemented yet (Phase 5)'];
+        return \CWP\RcloneCWP\Scheduling\CrontabService::uninstall();
     }
 
     /**
