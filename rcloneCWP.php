@@ -83,6 +83,25 @@ if (!empty($_REQUEST['ajax'])) {
             }
         };
 
+        // Authorization helper: rcloneCWP is a CWP root administrative module.
+        // Explicitly deny non-admin callers if invoked outside an authenticated admin context.
+        $requireAdmin = function () {
+            // Ensure a session is started
+            if (session_status() !== PHP_SESSION_ACTIVE && !headers_sent()) {
+                session_start();
+            }
+            // Only allow users whose session marks them as admin (root administrator in CWP)
+            $isAdmin = (
+                (!empty($_SESSION['is_admin']) && $_SESSION['is_admin'] === true) ||
+                (!empty($_SESSION['username']) && $_SESSION['username'] === 'root')
+            );
+            if (!$isAdmin) {
+                http_response_code(403);
+                echo json_encode(['ok' => false, 'error' => 'Access denied. Administrative privileges required.']);
+                exit();
+            }
+        };
+
         switch ($action) {
             case 'get_types':
                 $types = $dm->getAvailableTypes();
@@ -348,12 +367,18 @@ if (!empty($_REQUEST['ajax'])) {
             // PHASE 5: SCHEDULING & RETENTION ACTIONS
             // ----------------------------------------------------------------
             case 'list_schedules':
+                $requireAdmin();
                 $schedules = $scheduleManager->listSchedules();
                 echo json_encode(['ok' => true, 'schedules' => $schedules]);
                 exit();
 
             case 'get_schedule':
+                $requireAdmin();
                 $schedId = (int)($_REQUEST['id'] ?? 0);
+                if ($schedId <= 0) {
+                    echo json_encode(['ok' => false, 'error' => 'Valid schedule ID is required.']);
+                    exit();
+                }
                 $sched = $scheduleManager->getSchedule($schedId);
                 if (!$sched) {
                     echo json_encode(['ok' => false, 'error' => 'Schedule not found.']);
@@ -363,6 +388,7 @@ if (!empty($_REQUEST['ajax'])) {
                 exit();
 
             case 'save_schedule':
+                $requireAdmin();
                 $verifyCsrf();
                 $id       = (int)($_POST['id'] ?? 0);
                 $jobId    = (int)($_POST['job_id'] ?? 0);
@@ -370,13 +396,27 @@ if (!empty($_REQUEST['ajax'])) {
                 $timezone = trim($_POST['timezone'] ?? 'UTC');
                 $active   = !empty($_POST['active']) ? 1 : 0;
 
+                if (!CronParser::isValid($cron)) {
+                    echo json_encode(['ok' => false, 'error' => 'Invalid cron expression format.']);
+                    exit();
+                }
+
                 if ($id > 0) {
+                    $existing = $scheduleManager->getSchedule($id);
+                    if (!$existing) {
+                        echo json_encode(['ok' => false, 'error' => 'Schedule not found.']);
+                        exit();
+                    }
                     $saveRes = $scheduleManager->updateSchedule($id, [
                         'cron_expression' => $cron,
                         'timezone'        => $timezone,
                         'active'          => $active,
                     ]);
                 } else {
+                    if ($jobId <= 0 || !$bjm->getJob($jobId)) {
+                        echo json_encode(['ok' => false, 'error' => 'Valid backup job ID is required.']);
+                        exit();
+                    }
                     $saveRes = $scheduleManager->createSchedule([
                         'job_id'          => $jobId,
                         'cron_expression' => $cron,
@@ -388,14 +428,34 @@ if (!empty($_REQUEST['ajax'])) {
                 exit();
 
             case 'delete_schedule':
+                $requireAdmin();
                 $verifyCsrf();
                 $schedId = (int)($_POST['id'] ?? 0);
+                if ($schedId <= 0) {
+                    echo json_encode(['ok' => false, 'error' => 'Valid schedule ID is required.']);
+                    exit();
+                }
+                $existing = $scheduleManager->getSchedule($schedId);
+                if (!$existing) {
+                    echo json_encode(['ok' => false, 'error' => 'Schedule not found.']);
+                    exit();
+                }
                 echo json_encode($scheduleManager->deleteSchedule($schedId));
                 exit();
 
             case 'toggle_schedule':
+                $requireAdmin();
                 $verifyCsrf();
                 $schedId = (int)($_POST['id'] ?? 0);
+                if ($schedId <= 0) {
+                    echo json_encode(['ok' => false, 'error' => 'Valid schedule ID is required.']);
+                    exit();
+                }
+                $existing = $scheduleManager->getSchedule($schedId);
+                if (!$existing) {
+                    echo json_encode(['ok' => false, 'error' => 'Schedule not found.']);
+                    exit();
+                }
                 $active  = !empty($_POST['active']);
                 echo json_encode($scheduleManager->toggleActive($schedId, $active));
                 exit();
@@ -420,12 +480,20 @@ if (!empty($_REQUEST['ajax'])) {
                 exit();
 
             case 'prune_retention':
+                $requireAdmin();
                 $verifyCsrf();
                 $jobId = (int)($_POST['job_id'] ?? 0);
+                if ($jobId > 0 && !$bjm->getJob($jobId)) {
+                    echo json_encode(['ok' => false, 'error' => 'Backup job not found.']);
+                    exit();
+                }
+                $policy = Validator::enum($_POST['policy'] ?? 'days', ['days', 'count', 'gfs'], 'policy') ?: 'days';
+                $retentionDays = !empty($_POST['retention_days']) ? max(1, min(3650, (int)$_POST['retention_days'])) : null;
+                $keepCount = !empty($_POST['keep_count']) ? max(1, min(1000, (int)$_POST['keep_count'])) : null;
                 $options = [
-                    'policy'         => $_POST['policy'] ?? 'days',
-                    'retention_days' => !empty($_POST['retention_days']) ? (int)$_POST['retention_days'] : null,
-                    'keep_count'     => !empty($_POST['keep_count']) ? (int)$_POST['keep_count'] : null,
+                    'policy'         => $policy,
+                    'retention_days' => $retentionDays,
+                    'keep_count'     => $keepCount,
                     'dry_run'        => !empty($_POST['dry_run']),
                 ];
                 $pruneRes = $bjm->pruneExpiredBackups($jobId, array_filter($options));
@@ -433,15 +501,18 @@ if (!empty($_REQUEST['ajax'])) {
                 exit();
 
             case 'get_crontab_status':
+                $requireAdmin();
                 echo json_encode(['ok' => true, 'status' => CrontabService::getStatus()]);
                 exit();
 
             case 'install_crontab':
+                $requireAdmin();
                 $verifyCsrf();
                 echo json_encode(CrontabService::install());
                 exit();
 
             case 'uninstall_crontab':
+                $requireAdmin();
                 $verifyCsrf();
                 echo json_encode(CrontabService::uninstall());
                 exit();
