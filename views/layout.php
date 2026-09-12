@@ -59,10 +59,10 @@ $csrfToken = CSRF::generateToken();
                         <i class="fa fa-dashboard"></i> Overview & Status
                     </a>
                 </li>
-                <li class="disabled">
-                    <a href="#tab-jobs" title="Coming in Phase 3" style="color: #888;">
+                <li>
+                    <a href="#tab-jobs" data-toggle="tab" style="font-weight: 600;">
                         <i class="fa fa-tasks"></i> Backup Jobs
-                        <span class="badge" style="background: #ccc; font-size: 10px;">Phase 3</span>
+                        <span id="tab-badge-jobs-count" class="badge" style="background: #337ab7; margin-left: 4px;">0</span>
                     </a>
                 </li>
                 <li class="disabled">
@@ -98,15 +98,9 @@ $csrfToken = CSRF::generateToken();
                     <?php require __DIR__ . '/overview.php'; ?>
                 </div>
 
-                <!-- TAB 3: BACKUP JOBS (PREVIEW) -->
+                <!-- TAB 3: BACKUP JOBS -->
                 <div class="tab-pane" id="tab-jobs">
-                    <div class="alert alert-info text-center" style="padding: 40px 20px;">
-                        <i class="fa fa-tasks fa-3x" style="color: #31708f; margin-bottom: 15px;"></i>
-                        <h4>Backup Engine & Jobs (Phase 3)</h4>
-                        <p class="text-muted" style="max-width: 500px; margin: 0 auto 15px auto;">
-                            Phase 3 will provide full, incremental, and selective user account backups, MySQL database dumps, and multi-threaded compression directly linked to your configured destinations.
-                        </p>
-                    </div>
+                    <?php require __DIR__ . '/backup_jobs.php'; ?>
                 </div>
 
                 <!-- TAB 4: RESTORE (PREVIEW) -->

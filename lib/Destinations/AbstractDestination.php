@@ -134,6 +134,15 @@ abstract class AbstractDestination implements DestinationInterface
         $env = $this->getRcloneEnv($decryptedConfig, $remoteName);
         $target = $this->getRemoteTarget($decryptedConfig, $remoteName);
 
+        // Sanitize and validate target to prevent argument injection or control chars
+        if (!is_string($target) || $target === '' || $target[0] === '-' || preg_match('/[\x00-\x1f\x7f`$;|&><]/', $target)) {
+            return [
+                'ok' => false,
+                'message' => 'Invalid destination target format.',
+                'details' => ['target' => $target],
+            ];
+        }
+
         try {
             $result = Rclone::execute('lsjson', [$target], [], [], 15, $env);
 

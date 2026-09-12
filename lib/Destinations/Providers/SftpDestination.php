@@ -90,6 +90,20 @@ class SftpDestination extends AbstractDestination
             return $base;
         }
 
+        // SSRF defense: validate host is not loopback, private, or metadata endpoint
+        $host = trim($config['host'] ?? '');
+        if ($host === '') {
+            return [
+                'valid'  => false,
+                'errors' => ['host' => 'Hostname or IP address is required.'],
+            ];
+        }
+
+        $hostCheck = \CWP\RcloneCWP\Validator::validateHostSecurity($host, false, 'host');
+        if (!$hostCheck['valid']) {
+            return ['valid' => false, 'errors' => ['host' => $hostCheck['error']]];
+        }
+
         $pass = trim($config['pass'] ?? '');
         $keyPem = trim($config['key_pem'] ?? '');
 

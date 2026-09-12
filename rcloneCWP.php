@@ -35,6 +35,8 @@ if (!is_file($homeDir . '/bootstrap.php')) {
 
 require_once $homeDir . '/bootstrap.php';
 
+use CWP\RcloneCWP\Backup\BackupJobManager;
+use CWP\RcloneCWP\Backup\CwpAccountDiscovery;
 use CWP\RcloneCWP\CSRF;
 use CWP\RcloneCWP\Database;
 use CWP\RcloneCWP\Destinations\DestinationManager;
@@ -55,6 +57,8 @@ if (!empty($_REQUEST['ajax'])) {
         $db = Database::getInstance();
         $logger = new Logger(RCLONE_LOG_DIR, $db);
         $dm = new DestinationManager($db, null, $logger);
+        $bjm = new BackupJobManager($db, $dm, $logger);
+        $discovery = new CwpAccountDiscovery($db);
         $action = trim($_REQUEST['action'] ?? '');
 
         // CSRF validation helper for state-mutating actions
@@ -200,6 +204,82 @@ if (!empty($_REQUEST['ajax'])) {
                 $enabled = !empty($_REQUEST['enabled']) ? 1 : 0;
                 $result = $dm->toggleDestination($id, (bool)$enabled);
                 echo json_encode($result);
+                exit();
+
+            // ================================================================
+            // BACKUP JOBS & HISTORY ENDPOINTS
+            // ================================================================
+            case 'list_jobs':
+                $jobs = $bjm->listJobs();
+                echo json_encode(['ok' => true, 'jobs' => $jobs]);
+                exit();
+
+            case 'get_job':
+                $id = (int)($_REQUEST['id'] ?? 0);
+                $job = $bjm->getJob($id);
+                if (!$job) {
+                    echo json_encode(['ok' => false, 'error' => 'Backup job not found']);
+                    exit();
+                }
+                echo json_encode(['ok' => true, 'job' => $job]);
+                exit();
+
+            case 'save_job':
+                $verifyCsrf();
+                $id = (int)($_POST['id'] ?? 0);
+                $data = [
+                    'name'              => $_POST['name'] ?? '',
+                    'destination_id'    => (int)($_POST['destination_id'] ?? 0),
+                    'job_type'          => $_POST['job_type'] ?? 'incremental',
+                    'retention_days'    => (int)($_POST['retention_days'] ?? 7),
+                    'compression'       => !empty($_POST['compression']) ? 1 : 0,
+                    'notify_on_success' => !empty($_POST['notify_on_success']) ? 1 : 0,
+                    'notify_on_failure' => !empty($_POST['notify_on_failure']) ? 1 : 0,
+                    'accounts'          => isset($_POST['accounts']) && is_array($_POST['accounts']) ? $_POST['accounts'] : ['*'],
+                    'components'        => isset($_POST['components']) && is_array($_POST['components']) ? $_POST['components'] : [],
+                ];
+
+                if ($id > 0) {
+                    $result = $bjm->updateJob($id, $data);
+                } else {
+                    $result = $bjm->createJob($data);
+                }
+                echo json_encode($result);
+                exit();
+
+            case 'delete_job':
+                $verifyCsrf();
+                $id = (int)($_REQUEST['id'] ?? 0);
+                $result = $bjm->deleteJob($id);
+                echo json_encode($result);
+                exit();
+
+            case 'run_job_now':
+                $verifyCsrf();
+                $id = (int)($_REQUEST['id'] ?? 0);
+                $result = $bjm->runJobNow($id);
+                echo json_encode($result);
+                exit();
+
+            case 'list_accounts':
+                $accounts = $discovery->listAccounts();
+                $simpleAccounts = [];
+                foreach ($accounts as $u => $a) {
+                    $simpleAccounts[] = [
+                        'username'       => $u,
+                        'primary_domain' => $a['primary_domain'],
+                        'databases'      => count($a['databases']),
+                        'all_domains'    => count($a['all_domains']),
+                    ];
+                }
+                echo json_encode(['ok' => true, 'accounts' => $simpleAccounts]);
+                exit();
+
+            case 'list_history':
+                $jobId = (int)($_REQUEST['job_id'] ?? 0);
+                $limit = (int)($_REQUEST['limit'] ?? 50);
+                $history = $bjm->listHistory($jobId, $limit);
+                echo json_encode(['ok' => true, 'history' => $history]);
                 exit();
 
             default:

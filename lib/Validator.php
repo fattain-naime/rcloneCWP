@@ -415,15 +415,120 @@ class Validator
             return ["valid" => true, "error" => null];
         }
 
-        // Hostname DNS resolution check
+        // Hostname DNS resolution check — resolves both A and AAAA records
         $resolvedIps = @gethostbynamel($cleanHost);
         if (is_array($resolvedIps)) {
             foreach ($resolvedIps as $resolvedIp) {
                 if (self::isIpBlocked($resolvedIp, $allowPrivate)) {
                     return [
                         "valid" => false,
-                        "error" => "{$fieldName} resolves to a restricted, loopback, or private IP address ({$resolvedIp}).",
+                        "error" => "{$fieldName} resolves to a restricted or internal address and cannot be used.",
                     ];
+                }
+            }
+        }
+
+        // Explicit IPv6 (AAAA) resolution check to ensure IPv6 metadata endpoints are not bypassed
+        if (function_exists('dns_get_record')) {
+            $dnsRecords = @dns_get_record($cleanHost, DNS_AAAA);
+            if (is_array($dnsRecords)) {
+                foreach ($dnsRecords as $rec) {
+                    if (isset($rec['ipv6']) && self::isIpBlocked($rec['ipv6'], $allowPrivate)) {
+                        return [
+                            "valid" => false,
+                            "error" => "{$fieldName} resolves to a restricted or internal address and cannot be used.",
+                        ];
+                    }
+                }
+            }
+        }
+
+        return ["valid" => true, "error" => null];
+    }
+
+    /**
+     * Validate a hostname or IP address against SSRF, loopback, link-local,
+     * private networks, and internal metadata endpoints.
+     *
+     * @param string $host Hostname or IP string
+     * @param bool $allowPrivate Whether RFC1918 private ranges are allowed
+     * @param string $fieldName Field name for error reporting
+     * @return array ['valid' => bool, 'error' => string|null]
+     */
+    public static function validateHostSecurity($host, $allowPrivate = false, $fieldName = "Host")
+    {
+        $host = trim((string)$host);
+        if ($host === '') {
+            return [
+                "valid" => false,
+                "error" => "{$fieldName} cannot be empty.",
+            ];
+        }
+
+        // Clean IPv6 brackets if provided as [::1]
+        $cleanHost = trim(strtolower($host), '[]');
+
+        // Check dangerous domains and cloud metadata names
+        $blockedHosts = [
+            'localhost',
+            'metadata.google.internal',
+            'instance-data',
+            '169.254.169.254',
+        ];
+        if (in_array($cleanHost, $blockedHosts, true)
+            || substr($cleanHost, -6) === '.local'
+            || substr($cleanHost, -9) === '.internal'
+            || substr($cleanHost, -10) === '.localhost'
+        ) {
+            return [
+                "valid" => false,
+                "error" => "{$fieldName} cannot be localhost or internal metadata service.",
+            ];
+        }
+
+        // Direct IP check
+        if (filter_var($cleanHost, FILTER_VALIDATE_IP)) {
+            if (self::isIpBlocked($cleanHost, $allowPrivate)) {
+                return [
+                    "valid" => false,
+                    "error" => "{$fieldName} points to a restricted, loopback, or private IP address.",
+                ];
+            }
+            return ["valid" => true, "error" => null];
+        }
+
+        // Hostname syntax check
+        if (!preg_match('/^(?!\-)(?:[a-zA-Z0-9\-]{1,63}\.)+[a-zA-Z]{2,}$/', $cleanHost)) {
+            return [
+                "valid" => false,
+                "error" => "{$fieldName} must be a valid domain name or IP address.",
+            ];
+        }
+
+        // Hostname DNS resolution check — resolves both A and AAAA records
+        $resolvedIps = @gethostbynamel($cleanHost);
+        if (is_array($resolvedIps)) {
+            foreach ($resolvedIps as $resolvedIp) {
+                if (self::isIpBlocked($resolvedIp, $allowPrivate)) {
+                    return [
+                        "valid" => false,
+                        "error" => "{$fieldName} resolves to a restricted or internal address and cannot be used.",
+                    ];
+                }
+            }
+        }
+
+        // Explicit IPv6 (AAAA) resolution check to ensure IPv6 metadata endpoints are not bypassed
+        if (function_exists('dns_get_record')) {
+            $dnsRecords = @dns_get_record($cleanHost, DNS_AAAA);
+            if (is_array($dnsRecords)) {
+                foreach ($dnsRecords as $rec) {
+                    if (isset($rec['ipv6']) && self::isIpBlocked($rec['ipv6'], $allowPrivate)) {
+                        return [
+                            "valid" => false,
+                            "error" => "{$fieldName} resolves to a restricted or internal address and cannot be used.",
+                        ];
+                    }
                 }
             }
         }
