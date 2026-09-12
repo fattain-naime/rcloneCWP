@@ -84,8 +84,11 @@ class AccountMetadataRestorer implements ComponentRestorerInterface
             $createAccount = !empty($options['create_account']) && !$existing;
 
             if ($createAccount) {
-                // Create new user account
-                $hashedPass = md5($accountData['password'] ?? bin2hex(random_bytes(8)));
+                // Create new user account with strong password hashing
+                $hashedPass = password_hash(
+                    $accountData['password'] ?? bin2hex(random_bytes(16)),
+                    PASSWORD_DEFAULT
+                );
                 $insert = $pdo->prepare(
                     "INSERT INTO root_cwp.user (username, password, email, fullname, " .
                     "package, disklimit, bwlimit, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"

@@ -71,7 +71,7 @@ class DnsRestorer implements ComponentRestorerInterface
 
         $isDomainAuthorized = function (string $domain) use ($allowedDomains): bool {
             if (empty($allowedDomains)) {
-                return true; // No account domain constraints provided
+                return false; // Strict defense: account must have registered domains
             }
             $d = strtolower($domain);
             foreach ($allowedDomains as $allowed) {

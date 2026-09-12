@@ -192,11 +192,17 @@ class RestoreEngine
                 throw new \Exception('Invalid manifest.json format.');
             }
 
-            // 2. Determine target account — use provided username or manifest username
-            $targetUser = $username ?: ($manifest['username'] ?? '');
-            if (empty($targetUser)) {
-                throw new \Exception('No target username provided or found in manifest.');
+            // 2. Enforce manifest username matches request username (IDOR defense)
+            $manifestUser = $manifest['username'] ?? '';
+            if (empty($manifestUser)) {
+                throw new \Exception('Snapshot manifest has no username field.');
             }
+            if ($manifestUser !== $username) {
+                throw new \Exception(
+                    "Username mismatch: requested '{$username}' but snapshot is for '{$manifestUser}'"
+                );
+            }
+            $targetUser = $manifestUser;
 
             // 3. Resolve account data from CWP for the target user
             $account = $this->resolveAccount($targetUser);
