@@ -308,6 +308,11 @@ if (!defined('RCLONE_VERSION')) {
     'use strict';
 
     var CSRF_TOKEN = '<?php echo $csrfToken; ?>';
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return "";
+        return $('<div>').text(String(str)).html();
+    }
+
     var availableDestinations = [];
     var availableAccounts = [];
 
@@ -489,11 +494,14 @@ if (!defined('RCLONE_VERSION')) {
                     availableAccounts = resp.accounts;
                     var html = '';
                     $.each(availableAccounts, function(i, a) {
+                        var uName = escapeHtml(a.username);
+                        var uDomain = escapeHtml(a.primary_domain || "no domain");
+                        var uDbs = escapeHtml(a.databases);
                         html += '<div class="checkbox" style="margin: 4px 0;">' +
                             '<label>' +
-                                '<input type="checkbox" name="accounts[]" value="' + a.username + '"> ' +
-                                '<strong>' + a.username + '</strong> ' +
-                                '<span class="text-muted">(' + (a.primary_domain || 'no domain') + ' &bull; ' + a.databases + ' DBs)</span>' +
+                                '<input type="checkbox" name="accounts[]" value="' + uName + '"> ' +
+                                '<strong>' + uName + '</strong> ' +
+                                '<span class="text-muted">(' + uDomain + ' &bull; ' + uDbs + ' DBs)</span>' +
                             '</label>' +
                         '</div>';
                     });

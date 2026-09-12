@@ -199,7 +199,13 @@ class BackupEngine
 
         try {
             foreach ($targetAccounts as $account) {
-                $username = $account['username'];
+                $username = $account['username'] ?? '';
+                // Prevent path traversal, leading dash injection, and metacharacters
+                if (!preg_match('/^[a-zA-Z0-9_.-]+$/', $username) || strpos($username, '..') !== false || $username[0] === '-') {
+                    $this->logger->warning("Skipping invalid username: ". $username);
+                    continue;
+                }
+
                 $accountStaging = $runStagingDir . '/' . $username;
                 @mkdir($accountStaging, 0700, true);
 
@@ -273,6 +279,9 @@ class BackupEngine
                 $remoteName = 'job_' . $jobId . '_' . substr(md5(uniqid('', true)), 0, 8);
                 $env = $provider->getRcloneEnv($decryptedConfig, $remoteName);
                 $remoteTarget = $provider->getRemoteTarget($decryptedConfig, $remoteName, $subPath);
+                if ($remoteTarget === '' || $remoteTarget[0] === '-' || preg_match('/[ -`$;|&><]/', $remoteTarget)) {
+                    throw new \InvalidArgumentException("Invalid or unsafe remote target");
+                }
 
                 $this->logger->info("Transferring snapshot for user '{$username}' to {$remoteTarget}");
 
