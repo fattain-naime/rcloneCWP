@@ -312,7 +312,7 @@ class Hook
 
     /**
      * Build clean environment variables for hook execution
-     * Filters variable names and prevents unsafe environment injections
+     * Uses a strict whitelist to prevent environment variable injection
      */
     private function buildHookEnvironment($jobId, string $hookPoint, string $hookName, array $context): array
     {
@@ -323,13 +323,19 @@ class Hook
             'RCLONE_HOOK_NAME' => $hookName,
         ];
 
-        // Blocked dangerous env vars that could affect loader or shell execution
-        $blocked = ['LD_PRELOAD', 'LD_LIBRARY_PATH', 'BASH_ENV', 'ENV', 'SHELLOPTS', 'IFS'];
+        // Whitelist of safe context variable names that can be passed to hooks
+        // Only allow alphanumeric + underscore keys from context, prefixed with RCLONE_CTX_
+        $allowedContextKeys = [
+            'STATUS', 'FILES_COUNT', 'BYTES', 'DURATION', 'ERROR', 'JOB_NAME', 'USERNAME',
+            'CONFIG_ID', 'DESTINATION_NAME', 'RETENTION_DAYS', 'SCHEDULE_ID', 'TEST_MODE',
+            'MESSAGE', 'LEVEL', 'CATEGORY', 'TIMESTAMP', 'DATETIME', 'SERVER', 'HOSTNAME',
+            'SAFE_VAR',
+        ];
 
         foreach ($context as $key => $value) {
             $cleanedKey = strtoupper(preg_replace('/[^A-Za-z0-9_]/', '_', (string)$key));
-            if (in_array($cleanedKey, $blocked, true)) {
-                continue;
+            if (!in_array($cleanedKey, $allowedContextKeys, true)) {
+                continue; // Drop all non-whitelisted variables
             }
             $envKey = 'RCLONE_CTX_' . $cleanedKey;
             $env[$envKey] = is_array($value) || is_object($value) ? json_encode($value) : (string)$value;
@@ -759,8 +765,14 @@ class Hook
                 'duration' => $duration,
                 'success' => $result['success'] ?? false,
             ];
+
+            // Sanitize output to prevent secrets/PII in logs
             if (isset($result['output'])) {
-                $context['output'] = substr($result['output'], 0, 1000);
+                $output = substr($result['output'], 0, 200);
+                // Redact common secret patterns
+                $output = preg_replace('/(Authorization:|Bearer\s+)[A-Za-z0-9._-]+/i', '$1[REDACTED]', $output);
+                $output = preg_replace('/(password|passwd|secret|token|key|api_key)\s*[=:]\s*\S+/i', '$1=[REDACTED]', $output);
+                $context['output'] = $output;
             }
             if (isset($result['error'])) {
                 $context['error'] = $result['error'];
