@@ -277,7 +277,11 @@ if (!defined('RCLONE_VERSION')) {
     // Helper: HTML escaping
     function escapeHtml(str) {
         if (str === null || str === undefined) return '';
-        return $('<div>').text(String(str)).html();
+        return String(str).replace(/&/g, '&')
+                           .replace(/</g, '<')
+                           .replace(/>/g, '>')
+                           .replace(/"/g, '"')
+                           .replace(/'/g, '&#039;');
     }
 
     // Helper: format bytes
