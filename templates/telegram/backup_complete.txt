@@ -1,0 +1,8 @@
+✅ <b>rcloneCWP: BACKUP COMPLETE</b>
+🖥 <b>Server:</b> <code>{SERVER}</code>
+🕒 <b>Time:</b> {TIMESTAMP}
+📦 <b>Job:</b> {JOB_NAME} (#{JOB_ID})
+👤 <b>Account:</b> <code>{USERNAME}</code>
+📄 <b>Files:</b> {FILES_COUNT}
+📊 <b>Size:</b> {BYTES}
+⏱ <b>Duration:</b> {DURATION}s

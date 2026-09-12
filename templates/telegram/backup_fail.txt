@@ -1,0 +1,7 @@
+❌ <b>rcloneCWP: BACKUP FAILED</b>
+🖥 <b>Server:</b> <code>{SERVER}</code>
+🕒 <b>Time:</b> {TIMESTAMP}
+📦 <b>Job:</b> {JOB_NAME} (#{JOB_ID})
+👤 <b>Account:</b> <code>{USERNAME}</code>
+⚠️ <b>Error:</b>
+<pre>{ERROR}</pre>

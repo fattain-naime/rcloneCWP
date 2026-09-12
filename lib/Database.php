@@ -109,6 +109,18 @@ class Database
     }
 
     /**
+     * Alias for fetch() to retrieve a single row
+     *
+     * @param string $sql SQL query with placeholders
+     * @param array $params Parameters to bind
+     * @return array|null
+     */
+    public function fetchOne(string $sql, array $params = []): ?array
+    {
+        return $this->fetch($sql, $params);
+    }
+
+    /**
      * Execute a query and fetch single column value from first row
      *
      * @param string $sql SQL query with placeholders

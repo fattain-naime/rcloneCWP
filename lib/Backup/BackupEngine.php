@@ -3,7 +3,7 @@
  * rcloneCWP Backup Engine Core Orchestrator
  *
  * Orchestrates multi-component CWP account discovery, snapshots, in-memory rclone
- * execution, verification, and automated retention pruning.
+ * execution, verification, hooks, notifications, and automated retention pruning.
  *
  * PSR-12 compliant, PHP 7.1+ compatible.
  * @package CWP\RcloneCWP\Backup
@@ -22,7 +22,9 @@ use CWP\RcloneCWP\Backup\Collectors\MailCollector;
 use CWP\RcloneCWP\Backup\Collectors\SslCollector;
 use CWP\RcloneCWP\Database;
 use CWP\RcloneCWP\Destinations\DestinationManager;
+use CWP\RcloneCWP\Hook;
 use CWP\RcloneCWP\Logger;
+use CWP\RcloneCWP\Notification;
 use CWP\RcloneCWP\Rclone;
 
 class BackupEngine
@@ -48,6 +50,16 @@ class BackupEngine
     private $discovery;
 
     /**
+     * @var Hook
+     */
+    private $hook;
+
+    /**
+     * @var Notification
+     */
+    private $notification;
+
+    /**
      * @var ComponentCollectorInterface[]
      */
     private $collectors = [];
@@ -68,12 +80,16 @@ class BackupEngine
         Database $db = null,
         DestinationManager $dm = null,
         Logger $logger = null,
-        CwpAccountDiscovery $discovery = null
+        CwpAccountDiscovery $discovery = null,
+        Hook $hook = null,
+        Notification $notification = null
     ) {
         $this->db = $db ?: Database::getInstance();
         $this->logger = $logger ?: new Logger(RCLONE_LOG_DIR, $this->db);
         $this->dm = $dm ?: new DestinationManager($this->db, null, $this->logger);
         $this->discovery = $discovery ?: new CwpAccountDiscovery($this->db);
+        $this->hook = $hook ?: new Hook($this->db, $this->logger);
+        $this->notification = $notification ?: new Notification($this->db, $this->logger);
 
         // Standard staging directory path
         $this->stagingBase = sys_get_temp_dir() . '/.rclonecwp_staging';
@@ -177,6 +193,22 @@ class BackupEngine
 
         $this->logger->info("Started backup job #{$jobId} ('{$job['name']}'), execution #{$backupId}");
 
+        // Execute pre-backup hook and notification (backup_start)
+        $startContext = [
+            'job_id'      => $jobId,
+            'job_name'    => $job['name'],
+            'backup_id'   => $backupId,
+            'backup_type' => $backupType,
+            'status'      => 'running',
+            'timestamp'   => $startTime,
+        ];
+        try {
+            $this->hook->execute('backup_start', $jobId, $startContext);
+            $this->notification->notify('backup_start', $startContext);
+        } catch (\Exception $e) {
+            $this->logger->warning("Warning executing backup_start hook/notification: " . $e->getMessage());
+        }
+
         // 2. Parse target users and component selection
         $jobConfig = $this->parseJobSourcePath($job['source_path'] ?? '');
         $targetAccounts = $this->resolveTargetAccounts($jobConfig['accounts'] ?? ['*']);
@@ -185,6 +217,15 @@ class BackupEngine
         if (empty($targetAccounts)) {
             $this->finishBackup($backupId, 'failed', 0, 0, time() - $startTime, 'No valid target accounts resolved.');
             $this->releaseLock();
+
+            $failContext = array_merge($startContext, [
+                'status'   => 'failed',
+                'error'    => 'No valid target accounts resolved.',
+                'duration' => time() - $startTime,
+            ]);
+            $this->hook->execute('backup_fail', $jobId, $failContext);
+            $this->notification->notify('backup_fail', $failContext);
+
             return ['ok' => false, 'error' => 'No target accounts found for this job.'];
         }
 
@@ -279,7 +320,7 @@ class BackupEngine
                 $remoteName = 'job_' . $jobId . '_' . substr(md5(uniqid('', true)), 0, 8);
                 $env = $provider->getRcloneEnv($decryptedConfig, $remoteName);
                 $remoteTarget = $provider->getRemoteTarget($decryptedConfig, $remoteName, $subPath);
-                if ($remoteTarget === '' || $remoteTarget[0] === '-' || preg_match('/[ -`$;|&><]/', $remoteTarget)) {
+                if ($remoteTarget === '' || $remoteTarget[0] === '-' || preg_match('/[\x00-\x1f\x7f`$;|&><\'"\\\\\s]/', $remoteTarget)) {
                     throw new \InvalidArgumentException("Invalid or unsafe remote target");
                 }
 
@@ -308,7 +349,6 @@ class BackupEngine
                 if ($backupType === 'incremental' && in_array('files', $enabledComponents, true)) {
                     $homeDir = $account['home_dir'];
                     $remoteFilesTarget = $provider->getRemoteTarget($decryptedConfig, $remoteName, $subPath . '/files');
-                    $excludeFile = $accountStaging . '/meta/files_exclude.txt';
 
                     $syncFlags = ['transfers', 'retries'];
                     $syncValues = ['transfers' => 4, 'retries' => 3];
@@ -342,11 +382,32 @@ class BackupEngine
             }
 
             $duration = time() - $startTime;
-            $finalStatus = empty($userErrors) ? 'completed' : 'completed'; // completed with warnings or full success
+            $finalStatus = empty($userErrors) ? 'completed' : 'completed';
             $errorMsg = !empty($userErrors) ? implode('; ', $userErrors) : null;
 
             $this->finishBackup($backupId, $finalStatus, $totalFiles, $totalBytes, $duration, $errorMsg);
             $this->logger->info("Backup job #{$jobId} finished with status '{$finalStatus}' in {$duration}s");
+
+            // Dispatch backup_complete hooks & notifications
+            $completeContext = [
+                'job_id'      => $jobId,
+                'job_name'    => $job['name'],
+                'backup_id'   => $backupId,
+                'status'      => $finalStatus,
+                'duration'    => $duration,
+                'files_count' => $totalFiles,
+                'bytes'       => $totalBytes,
+                'errors'      => $userErrors,
+                'error'       => $errorMsg,
+                'timestamp'   => time(),
+            ];
+
+            try {
+                $this->hook->execute('backup_complete', $jobId, $completeContext);
+                $this->notification->notify('backup_complete', $completeContext);
+            } catch (\Exception $e) {
+                $this->logger->warning("Warning executing backup_complete hook/notification: " . $e->getMessage());
+            }
 
             return [
                 'ok'          => true,
@@ -361,6 +422,26 @@ class BackupEngine
             $duration = time() - $startTime;
             $this->finishBackup($backupId, 'failed', $totalFiles, $totalBytes, $duration, $e->getMessage());
             $this->logger->error("Exception in backup job #{$jobId}: " . $e->getMessage());
+
+            // Dispatch backup_fail hooks & notifications
+            $failContext = [
+                'job_id'      => $jobId,
+                'job_name'    => $job['name'],
+                'backup_id'   => $backupId,
+                'status'      => 'failed',
+                'duration'    => $duration,
+                'files_count' => $totalFiles,
+                'bytes'       => $totalBytes,
+                'error'       => $e->getMessage(),
+                'timestamp'   => time(),
+            ];
+
+            try {
+                $this->hook->execute('backup_fail', $jobId, $failContext);
+                $this->notification->notify('backup_fail', $failContext);
+            } catch (\Exception $ne) {
+                $this->logger->warning("Warning executing backup_fail hook/notification: " . $ne->getMessage());
+            }
 
             return [
                 'ok'        => false,
@@ -423,6 +504,9 @@ class BackupEngine
                 $subPath = $exp['config_id'];
                 if (!empty($subPath)) {
                     $remoteTarget = $provider->getRemoteTarget($decryptedConfig, $remoteName, $subPath);
+                    if ($remoteTarget === '' || $remoteTarget[0] === '-' || preg_match('/[\x00-\x1f\x7f`$;|&><\'"\\\\\s]/', $remoteTarget)) {
+                        throw new \InvalidArgumentException("Invalid or unsafe remote target for pruning");
+                    }
                     $this->logger->info("Pruning expired backup #{$exp['id']} at {$remoteTarget}");
                     // Use rclone purge to remove remote folder
                     Rclone::execute('purge', [$remoteTarget], [], [], 120, $env);

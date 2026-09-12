@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Backup Failed</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 25px; color: #333;">
+  <div style="max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); overflow: hidden; border: 1px solid #e1e4e8;">
+    <div style="background: linear-gradient(135deg, #dc3545, #bd2130); color: #ffffff; padding: 22px 28px;">
+      <h2 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.2px;">&#9888; Backup Failed</h2>
+      <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">rcloneCWP Automated Backup Alert</p>
+    </div>
+    <div style="padding: 26px 28px;">
+      <p style="font-size: 14px; margin-top: 0; margin-bottom: 20px; color: #444;">
+        The backup job <strong>{JOB_NAME}</strong> encountered an error during execution on server <code>{SERVER}</code>.
+      </p>
+      <div style="background-color: #fff5f5; border-left: 4px solid #e53e3e; padding: 14px 16px; margin-bottom: 22px; border-radius: 4px;">
+        <div style="font-size: 12px; font-weight: 700; color: #c53030; text-transform: uppercase; margin-bottom: 4px;">Error Details</div>
+        <div style="font-size: 13px; color: #9b2c2c; font-family: monospace; word-break: break-all;">{ERROR}</div>
+      </div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 24px;">
+        <tbody>
+          <tr style="border-bottom: 1px solid #edf2f7;"><td style="padding: 10px 0; color: #718096; font-weight: 600;">Job ID</td><td style="padding: 10px 0; color: #1a202c; text-align: right; font-weight: 500;">#{JOB_ID}</td></tr>
+          <tr style="border-bottom: 1px solid #edf2f7;"><td style="padding: 10px 0; color: #718096; font-weight: 600;">Status</td><td style="padding: 10px 0; color: #e53e3e; text-align: right; font-weight: 600;">FAILED</td></tr>
+          <tr style="border-bottom: 1px solid #edf2f7;"><td style="padding: 10px 0; color: #718096; font-weight: 600;">Execution Time</td><td style="padding: 10px 0; color: #1a202c; text-align: right; font-weight: 500;">{TIMESTAMP}</td></tr>
+        </tbody>
+      </table>
+      <div style="border-top: 1px solid #e2e8f0; padding-top: 18px; text-align: center; color: #a0aec0; font-size: 11px;">
+        Sent automatically by <strong>rcloneCWP</strong> &bull; Enterprise Backup &amp; Recovery Module for CWP
+      </div>
+    </div>
+  </div>
+</body>
+</html>

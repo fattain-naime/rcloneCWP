@@ -77,9 +77,13 @@ CREATE TABLE IF NOT EXISTS rclone_hooks (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   event ENUM('backup_start', 'backup_complete', 'backup_fail', 'restore_start', 'restore_complete', 'restore_fail') NOT NULL,
+  type ENUM('shell', 'php', 'python', 'url') NOT NULL DEFAULT 'shell',
   command TEXT NOT NULL,
+  timeout INT NOT NULL DEFAULT 300,
+  run_order INT NOT NULL DEFAULT 10,
   enabled TINYINT(1) DEFAULT 1,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_event (event),
   INDEX idx_enabled (enabled)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

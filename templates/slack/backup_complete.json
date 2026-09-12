@@ -1,0 +1,18 @@
+{
+  "attachments": [
+    {
+      "color": "#28a745",
+      "title": "[rcloneCWP] [SUCCESS] Backup '{JOB_NAME}' Completed",
+      "fields": [
+        {"title": "Server", "value": "{SERVER}", "short": true},
+        {"title": "Job ID", "value": "#{JOB_ID}", "short": true},
+        {"title": "Account", "value": "{USERNAME}", "short": true},
+        {"title": "Files", "value": "{FILES_COUNT}", "short": true},
+        {"title": "Volume", "value": "{BYTES}", "short": true},
+        {"title": "Duration", "value": "{DURATION}s", "short": true}
+      ],
+      "footer": "rcloneCWP Backup Engine",
+      "ts": {TIMESTAMP}
+    }
+  ]
+}

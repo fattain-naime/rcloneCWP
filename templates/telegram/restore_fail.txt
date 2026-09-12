@@ -1,0 +1,6 @@
+❌ <b>rcloneCWP: RESTORE FAILED</b>
+🖥 <b>Server:</b> <code>{SERVER}</code>
+🕒 <b>Time:</b> {TIMESTAMP}
+👤 <b>Account:</b> <code>{USERNAME}</code>
+⚠️ <b>Error:</b>
+<pre>{ERROR}</pre>

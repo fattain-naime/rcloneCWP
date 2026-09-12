@@ -1,0 +1,6 @@
+✅ <b>rcloneCWP: RESTORE COMPLETE</b>
+🖥 <b>Server:</b> <code>{SERVER}</code>
+🕒 <b>Time:</b> {TIMESTAMP}
+👤 <b>Account:</b> <code>{USERNAME}</code>
+📊 <b>Volume:</b> {BYTES}
+⏱ <b>Duration:</b> {DURATION}s

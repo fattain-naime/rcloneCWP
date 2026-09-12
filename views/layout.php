@@ -80,6 +80,18 @@ $csrfToken = CSRF::generateToken();
                         <i class="fa fa-list-alt"></i> Activity Logs
                     </a>
                 </li>
+                <li>
+                    <a href="#tab-hooks" data-toggle="tab" style="font-weight: 600;">
+                        <i class="fa fa-code-fork"></i> Hooks
+                        <span id="tab-badge-hooks-count" class="badge" style="background: #8e44ad; margin-left: 4px;">0</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#tab-notifications" data-toggle="tab" style="font-weight: 600;">
+                        <i class="fa fa-bell"></i> Notifications
+                        <span id="tab-badge-notifs-count" class="badge" style="background: #2980b9; margin-left: 4px;">0</span>
+                    </a>
+                </li>
             </ul>
         </div>
 
@@ -114,6 +126,16 @@ $csrfToken = CSRF::generateToken();
                 <!-- TAB 6: LOGS -->
                 <div class="tab-pane" id="tab-logs">
                     <?php require __DIR__ . '/logs.php'; ?>
+                </div>
+
+                <!-- TAB 7: HOOKS -->
+                <div class="tab-pane" id="tab-hooks">
+                    <?php require __DIR__ . '/hooks.php'; ?>
+                </div>
+
+                <!-- TAB 8: NOTIFICATIONS -->
+                <div class="tab-pane" id="tab-notifications">
+                    <?php require __DIR__ . '/notifications.php'; ?>
                 </div>
             </div>
         </div>

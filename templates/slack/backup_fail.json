@@ -1,0 +1,16 @@
+{
+  "attachments": [
+    {
+      "color": "#dc3545",
+      "title": "[rcloneCWP] [FAILURE] Backup '{JOB_NAME}' Failed",
+      "fields": [
+        {"title": "Server", "value": "{SERVER}", "short": true},
+        {"title": "Job ID", "value": "#{JOB_ID}", "short": true},
+        {"title": "Account", "value": "{USERNAME}", "short": true},
+        {"title": "Error", "value": "{ERROR}", "short": false}
+      ],
+      "footer": "rcloneCWP Backup Engine",
+      "ts": {TIMESTAMP}
+    }
+  ]
+}

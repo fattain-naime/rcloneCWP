@@ -40,7 +40,9 @@ use CWP\RcloneCWP\Backup\CwpAccountDiscovery;
 use CWP\RcloneCWP\CSRF;
 use CWP\RcloneCWP\Database;
 use CWP\RcloneCWP\Destinations\DestinationManager;
+use CWP\RcloneCWP\Hook;
 use CWP\RcloneCWP\Logger;
+use CWP\RcloneCWP\Notification;
 use CWP\RcloneCWP\Restore\RestoreEngine;
 use CWP\RcloneCWP\Restore\SnapshotBrowser;
 use CWP\RcloneCWP\Scheduling\CronParser;
@@ -69,6 +71,8 @@ if (!empty($_REQUEST['ajax'])) {
         $snapshotBrowser = new SnapshotBrowser($db, $dm, $logger);
         $scheduleManager = new ScheduleManager($db);
         $retentionManager = new RetentionManager($db, $dm, $logger);
+        $hookManager = new Hook($db, $logger);
+        $notificationManager = new Notification($db, $logger);
         $action = trim($_REQUEST['action'] ?? '');
 
         // CSRF validation helper for state-mutating actions
@@ -515,6 +519,177 @@ if (!empty($_REQUEST['ajax'])) {
                 $requireAdmin();
                 $verifyCsrf();
                 echo json_encode(CrontabService::uninstall());
+                exit();
+
+            // ================================================================
+            // HOOKS MANAGEMENT ENDPOINTS
+            // ================================================================
+            case 'list_hooks':
+                $requireAdmin();
+                $hooks = $hookManager->listHooks();
+                echo json_encode(['ok' => true, 'hooks' => $hooks]);
+                exit();
+
+            case 'get_hook':
+                $requireAdmin();
+                $id = (int)($_REQUEST['id'] ?? 0);
+                $hook = $hookManager->getHook($id);
+                if (!$hook) {
+                    echo json_encode(['ok' => false, 'error' => 'Hook not found']);
+                    exit();
+                }
+                echo json_encode(['ok' => true, 'hook' => $hook]);
+                exit();
+
+            case 'save_hook':
+                $requireAdmin();
+                $verifyCsrf();
+                $id = (int)($_POST['id'] ?? 0);
+                $name = Validator::string($_POST['name'] ?? '', 100, 'name');
+                $event = Validator::enum($_POST['event'] ?? '', [
+                    'backup_start', 'backup_complete', 'backup_fail',
+                    'restore_start', 'restore_complete', 'restore_fail'
+                ], 'event');
+                $type = Validator::enum($_POST['type'] ?? '', ['shell', 'php', 'python', 'url'], 'type');
+                $command = trim($_POST['command'] ?? '');
+                $enabled = !empty($_POST['enabled']) ? 1 : 0;
+                $runOrder = (int)($_POST['run_order'] ?? 10);
+                $timeout = max(1, min(300, (int)($_POST['timeout'] ?? 30)));
+
+                if (!$name) {
+                    echo json_encode(['ok' => false, 'error' => 'Hook name is required (max 100 characters).']);
+                    exit();
+                }
+                if (!$event) {
+                    echo json_encode(['ok' => false, 'error' => 'Valid event trigger is required.']);
+                    exit();
+                }
+                if (!$type) {
+                    echo json_encode(['ok' => false, 'error' => 'Valid hook runtime type is required.']);
+                    exit();
+                }
+                if ($command === '') {
+                    echo json_encode(['ok' => false, 'error' => 'Script command, code, or URL is required.']);
+                    exit();
+                }
+
+                $hookData = [
+                    'name'      => $name,
+                    'event'     => $event,
+                    'type'      => $type,
+                    'command'   => $command,
+                    'enabled'   => $enabled,
+                    'run_order' => $runOrder,
+                    'timeout'   => $timeout,
+                ];
+
+                if ($id > 0) {
+                    $result = $hookManager->updateHook($id, $hookData);
+                } else {
+                    $result = $hookManager->createHook($hookData);
+                }
+                echo json_encode($result);
+                exit();
+
+            case 'delete_hook':
+                $requireAdmin();
+                $verifyCsrf();
+                $id = (int)($_REQUEST['id'] ?? 0);
+                $result = $hookManager->deleteHook($id);
+                echo json_encode($result);
+                exit();
+
+            case 'toggle_hook':
+                $requireAdmin();
+                $verifyCsrf();
+                $id = (int)($_REQUEST['id'] ?? 0);
+                $result = $hookManager->toggleHook($id);
+                echo json_encode($result);
+                exit();
+
+            case 'test_hook':
+                $requireAdmin();
+                $verifyCsrf();
+                $id = (int)($_REQUEST['id'] ?? 0);
+                $result = $hookManager->testHook($id);
+                echo json_encode($result);
+                exit();
+
+            // ================================================================
+            // NOTIFICATIONS MANAGEMENT ENDPOINTS
+            // ================================================================
+            case 'list_notifications':
+                $requireAdmin();
+                $notifications = $notificationManager->listNotifications();
+                echo json_encode(['ok' => true, 'notifications' => $notifications]);
+                exit();
+
+            case 'get_notification':
+                $requireAdmin();
+                $id = (int)($_REQUEST['id'] ?? 0);
+                $notif = $notificationManager->getNotification($id, false);
+                if (!$notif) {
+                    echo json_encode(['ok' => false, 'error' => 'Notification channel not found']);
+                    exit();
+                }
+                echo json_encode(['ok' => true, 'notification' => $notif]);
+                exit();
+
+            case 'save_notification':
+                $requireAdmin();
+                $verifyCsrf();
+                $id = (int)($_POST['id'] ?? 0);
+                $name = Validator::string($_POST['name'] ?? '', 255, 'name');
+                $type = Validator::enum($_POST['type'] ?? '', ['email', 'telegram', 'webhook'], 'type');
+                $active = !empty($_POST['active']) ? 1 : 0;
+                $config = isset($_POST['config']) && is_array($_POST['config']) ? $_POST['config'] : [];
+
+                if (!$name) {
+                    echo json_encode(['ok' => false, 'error' => 'Channel name is required (max 255 characters).']);
+                    exit();
+                }
+                if (!$type) {
+                    echo json_encode(['ok' => false, 'error' => 'Valid notification type (email, telegram, webhook) is required.']);
+                    exit();
+                }
+
+                $notifData = [
+                    'name'   => $name,
+                    'type'   => $type,
+                    'active' => $active,
+                    'config' => $config,
+                ];
+
+                if ($id > 0) {
+                    $result = $notificationManager->updateNotification($id, $notifData);
+                } else {
+                    $result = $notificationManager->createNotification($notifData);
+                }
+                echo json_encode($result);
+                exit();
+
+            case 'delete_notification':
+                $requireAdmin();
+                $verifyCsrf();
+                $id = (int)($_REQUEST['id'] ?? 0);
+                $result = $notificationManager->deleteNotification($id);
+                echo json_encode($result);
+                exit();
+
+            case 'toggle_notification':
+                $requireAdmin();
+                $verifyCsrf();
+                $id = (int)($_REQUEST['id'] ?? 0);
+                $result = $notificationManager->toggleNotification($id);
+                echo json_encode($result);
+                exit();
+
+            case 'test_notification':
+                $requireAdmin();
+                $verifyCsrf();
+                $id = (int)($_REQUEST['id'] ?? 0);
+                $result = $notificationManager->testNotification($id);
+                echo json_encode($result);
                 exit();
 
             default:

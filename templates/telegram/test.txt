@@ -1,0 +1,5 @@
+🔔 <b>rcloneCWP: TEST NOTIFICATION</b>
+🖥 <b>Server:</b> <code>{SERVER}</code>
+🕒 <b>Time:</b> {TIMESTAMP}
+📦 <b>Event:</b> TEST
+✅ Email/Telegram/Webhook channel is working correctly.

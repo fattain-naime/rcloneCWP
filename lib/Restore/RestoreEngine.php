@@ -12,7 +12,9 @@ namespace CWP\RcloneCWP\Restore;
 
 use CWP\RcloneCWP\Database;
 use CWP\RcloneCWP\Destinations\DestinationManager;
+use CWP\RcloneCWP\Hook;
 use CWP\RcloneCWP\Logger;
+use CWP\RcloneCWP\Notification;
 use CWP\RcloneCWP\Restore\Restorers\AccountMetadataRestorer;
 use CWP\RcloneCWP\Restore\Restorers\CronRestorer;
 use CWP\RcloneCWP\Restore\Restorers\DatabaseRestorer;
@@ -35,6 +37,12 @@ class RestoreEngine
     /** @var SnapshotBrowser */
     private $browser;
 
+    /** @var Hook */
+    private $hook;
+
+    /** @var Notification */
+    private $notification;
+
     /** @var ComponentRestorerInterface[] */
     private $restorers = [];
 
@@ -48,12 +56,16 @@ class RestoreEngine
         Database $db = null,
         DestinationManager $dm = null,
         Logger $logger = null,
-        SnapshotBrowser $browser = null
+        SnapshotBrowser $browser = null,
+        Hook $hook = null,
+        Notification $notification = null
     ) {
         $this->db = $db ?: Database::getInstance();
         $this->logger = $logger ?: new Logger(RCLONE_LOG_DIR, $this->db);
         $this->dm = $dm ?: new DestinationManager($this->db, null, $this->logger);
         $this->browser = $browser ?: new SnapshotBrowser($this->db, $this->dm, $this->logger);
+        $this->hook = $hook ?: new Hook($this->db, $this->logger);
+        $this->notification = $notification ?: new Notification($this->db, $this->logger);
 
         $this->stagingBase = sys_get_temp_dir() . '/.rclonecwp_restore';
         if (!is_dir($this->stagingBase)) {
@@ -159,6 +171,23 @@ class RestoreEngine
             $this->releaseLock();
             $this->logRestoreComplete($restoreId, 'failed', 0, 0, 'Destination not found or disabled.');
             return ['ok' => false, 'restored' => [], 'bytes' => 0, 'error' => 'Destination not found or disabled.'];
+        }
+
+        // Dispatch restore_start hooks & notifications
+        $startContext = [
+            'restore_id'   => $restoreId,
+            'destination_id' => $destinationId,
+            'snapshot_path'  => $snapshotPath,
+            'username'       => $username,
+            'components'     => $components,
+            'options'        => $options,
+            'timestamp'      => $startTime,
+        ];
+        try {
+            $this->hook->execute('restore_start', null, $startContext);
+            $this->notification->notify('restore_start', $startContext);
+        } catch (\Exception $e) {
+            $this->logger->warning("Warning executing restore_start hook/notification: " . $e->getMessage());
         }
 
         $provider = $this->dm->getProvider($dest['type']);
@@ -330,6 +359,27 @@ class RestoreEngine
 
             $this->logger->info("Restore #{$restoreId} completed for user '{$targetUser}', status: {$logFields['status']}");
 
+            // Dispatch restore_complete hooks & notifications
+            $completeContext = [
+                'restore_id'     => $restoreId,
+                'destination_id' => $destinationId,
+                'snapshot_path'  => $snapshotPath,
+                'username'       => $targetUser,
+                'status'         => $logFields['status'],
+                'duration'       => $duration,
+                'bytes'          => $totalBytes,
+                'restored'       => $restored,
+                'errors'         => $errors,
+                'error'          => $logFields['error_message'],
+                'timestamp'      => time(),
+            ];
+            try {
+                $this->hook->execute('restore_complete', null, $completeContext);
+                $this->notification->notify('restore_complete', $completeContext);
+            } catch (\Exception $e) {
+                $this->logger->warning("Warning executing restore_complete hook/notification: " . $e->getMessage());
+            }
+
             return [
                 'ok'          => $ok,
                 'restored'    => $restored,
@@ -342,6 +392,25 @@ class RestoreEngine
             $duration = time() - $startTime;
             $this->logRestoreComplete($restoreId, 'failed', $totalBytes, $duration, $e->getMessage());
             $this->logger->error("Restore #{$restoreId} failed: " . $e->getMessage());
+
+            // Dispatch restore_fail hooks & notifications
+            $failContext = [
+                'restore_id'     => $restoreId,
+                'destination_id' => $destinationId,
+                'snapshot_path'  => $snapshotPath,
+                'username'       => $username,
+                'status'         => 'failed',
+                'duration'       => $duration,
+                'bytes'          => $totalBytes,
+                'error'          => $e->getMessage(),
+                'timestamp'      => time(),
+            ];
+            try {
+                $this->hook->execute('restore_fail', null, $failContext);
+                $this->notification->notify('restore_fail', $failContext);
+            } catch (\Exception $ne) {
+                $this->logger->warning("Warning executing restore_fail hook/notification: " . $ne->getMessage());
+            }
 
             return [
                 'ok'          => false,
