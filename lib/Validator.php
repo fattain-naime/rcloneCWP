@@ -250,4 +250,184 @@ class Validator
 
         return array_values($value);
     }
+
+    /**
+     * Check if an IPv4 or IPv6 address is in a blocked/private/reserved range
+     *
+     * @param string $ip IP address
+     * @param bool $allowPrivate Whether RFC1918 private ranges are allowed
+     * @return bool True if blocked, false if safe
+     */
+    public static function isIpBlocked($ip, $allowPrivate = false)
+    {
+        $cleanIp = trim($ip, '[]');
+
+        // Check IPv4
+        if (filter_var($cleanIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            $long = ip2long($cleanIp);
+            if ($long === false) {
+                return true;
+            }
+
+            // 127.0.0.0/8 (Loopback)
+            if (($long & 0xFF000000) === 0x7F000000) {
+                return true;
+            }
+            // 169.254.0.0/16 (Link-Local / Cloud Metadata)
+            if (($long & 0xFFFF0000) === 0xA9FE0000) {
+                return true;
+            }
+            // 0.0.0.0/8 ("This network")
+            if (($long & 0xFF000000) === 0x00000000) {
+                return true;
+            }
+            // 224.0.0.0/4 (Multicast) & 240.0.0.0/4 (Reserved)
+            if (($long & 0xF0000000) === 0xE0000000 || ($long & 0xF0000000) === 0xF0000000) {
+                return true;
+            }
+
+            if (!$allowPrivate) {
+                // 10.0.0.0/8 (RFC 1918)
+                if (($long & 0xFF000000) === 0x0A000000) {
+                    return true;
+                }
+                // 172.16.0.0/12 (RFC 1918)
+                if (($long & 0xFFF00000) === 0xAC100000) {
+                    return true;
+                }
+                // 192.168.0.0/16 (RFC 1918)
+                if (($long & 0xFFFF0000) === 0xC0A80000) {
+                    return true;
+                }
+                // 100.64.0.0/10 (Shared Address Space / CGNAT)
+                if (($long & 0xFFC00000) === 0x64400000) {
+                    return true;
+                }
+                // 198.18.0.0/15 (Benchmarking)
+                if (($long & 0xFFFE0000) === 0xC6120000) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Check IPv6
+        if (filter_var($cleanIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $bin = inet_pton($cleanIp);
+            if ($bin === false) {
+                return true;
+            }
+
+            // Loopback ::1
+            if ($cleanIp === '::1' || $bin === inet_pton('::1')) {
+                return true;
+            }
+
+            // IPv4-mapped IPv6 (::ffff:x.x.x.x)
+            if (substr($bin, 0, 12) === str_repeat("\x00", 10) . "\xFF\xFF") {
+                $v4Bin = substr($bin, 12);
+                $v4Ip = inet_ntop($v4Bin);
+                return self::isIpBlocked($v4Ip, $allowPrivate);
+            }
+
+            // Link-local fe80::/10
+            if (ord($bin[0]) === 0xFE && (ord($bin[1]) & 0xC0) === 0x80) {
+                return true;
+            }
+
+            if (!$allowPrivate) {
+                // Unique-local fc00::/7
+                if ((ord($bin[0]) & 0xFE) === 0xFC) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return false;
+    }
+
+    /**
+     * Validate an HTTP/HTTPS URL and prevent SSRF to internal/private/metadata ranges.
+     *
+     * @param string $url URL to validate
+     * @param bool $allowPrivate Whether to allow private RFC1918 IPs (default false)
+     * @param string $fieldName Field name for error message
+     * @return array ["valid" => bool, "error" => string|null]
+     */
+    public static function validateUrlSecurity($url, $allowPrivate = false, $fieldName = "URL")
+    {
+        $url = trim((string)$url);
+        if (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match("/^https?:\/\//i", $url)) {
+            return [
+                "valid" => false,
+                "error" => "{$fieldName} must be a valid HTTP or HTTPS URL.",
+            ];
+        }
+
+        $parsed = parse_url($url);
+        $host = $parsed['host'] ?? '';
+        if (!$host) {
+            return [
+                "valid" => false,
+                "error" => "{$fieldName} contains an invalid host.",
+            ];
+        }
+
+        // Disallow embedded userinfo (e.g. http://user:pass@host)
+        if (isset($parsed['user']) || isset($parsed['pass'])) {
+            return [
+                "valid" => false,
+                "error" => "{$fieldName} cannot contain embedded authentication credentials in URL.",
+            ];
+        }
+
+        $cleanHost = trim(strtolower($host), '[]');
+
+        // Check dangerous domains and cloud metadata names
+        $blockedHosts = [
+            'localhost',
+            'metadata.google.internal',
+            'instance-data',
+            '169.254.169.254',
+        ];
+        if (in_array($cleanHost, $blockedHosts, true)
+            || substr($cleanHost, -6) === '.local'
+            || substr($cleanHost, -9) === '.internal'
+            || substr($cleanHost, -10) === '.localhost'
+        ) {
+            return [
+                "valid" => false,
+                "error" => "{$fieldName} host cannot be localhost or internal metadata service.",
+            ];
+        }
+
+        // Direct IP check
+        if (filter_var($cleanHost, FILTER_VALIDATE_IP)) {
+            if (self::isIpBlocked($cleanHost, $allowPrivate)) {
+                return [
+                    "valid" => false,
+                    "error" => "{$fieldName} points to a restricted, loopback, or private IP address.",
+                ];
+            }
+            return ["valid" => true, "error" => null];
+        }
+
+        // Hostname DNS resolution check
+        $resolvedIps = @gethostbynamel($cleanHost);
+        if (is_array($resolvedIps)) {
+            foreach ($resolvedIps as $resolvedIp) {
+                if (self::isIpBlocked($resolvedIp, $allowPrivate)) {
+                    return [
+                        "valid" => false,
+                        "error" => "{$fieldName} resolves to a restricted, loopback, or private IP address ({$resolvedIp}).",
+                    ];
+                }
+            }
+        }
+
+        return ["valid" => true, "error" => null];
+    }
 }

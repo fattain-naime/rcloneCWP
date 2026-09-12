@@ -3,7 +3,8 @@
  * rcloneCWP Module Entry Point
  *
  * The CWP dispatcher includes this file after setting $include_path.
- * We guard against direct HTTP access and validate the admin session.
+ * Handles AJAX requests and renders the module user interface.
+ * PSR-12 compliant, PHP 7.1+ compatible.
  * @package CWP\RcloneCWP
  */
 
@@ -14,10 +15,6 @@ if (!isset($include_path)) {
 }
 
 // Defense-in-depth: verify an admin session exists when one is trackable.
-// The dispatcher is ionCube-encoded so exact session key names are
-// unverifiable from source; lkey/cp are the documented CWP keys. If session
-// tracking is inactive (session.auto_cookies off in some SAPIs), fall back
-// to the $include_path guard above rather than blocking the module.
 if (session_status() === PHP_SESSION_ACTIVE
     && !isset($_SESSION['lkey'])
     && !isset($_SESSION['cp'])
@@ -27,98 +24,210 @@ if (session_status() === PHP_SESSION_ACTIVE
     exit();
 }
 
-// Load the off-htdocs runtime
+// Load the off-htdocs runtime bootstrap
 $homeDir = '/usr/local/cwp/rcloneCWP';
 if (!is_file($homeDir . '/bootstrap.php')) {
-    echo "<h3>rcloneCWP not installed</h3>";
+    echo "<h3>rcloneCWP runtime not found</h3>";
     echo "<p>Run the installer first:</p>";
-    echo "<pre>curl -sSL https://github.com/fattain_naive/rcloneCWP/main/install.sh | bash</pre>";
+    echo "<pre>curl -sSL https://raw.githubusercontent.com/fattain_naive/rcloneCWP/main/install.sh | bash</pre>";
     exit();
 }
 
 require_once $homeDir . '/bootstrap.php';
 
+use CWP\RcloneCWP\CSRF;
 use CWP\RcloneCWP\Database;
+use CWP\RcloneCWP\Destinations\DestinationManager;
 use CWP\RcloneCWP\Logger;
-use CWP\RcloneCWP\Rclone;
+use CWP\RcloneCWP\Validator;
 
+// ============================================================================
+// AJAX DISPATCHER
+// ============================================================================
+if (!empty($_REQUEST['ajax'])) {
+    // Clear any preceding output buffering from CWP dispatcher
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    header('Content-Type: application/json; charset=utf-8');
+
+    try {
+        $db = Database::getInstance();
+        $logger = new Logger(RCLONE_LOG_DIR, $db);
+        $dm = new DestinationManager($db, null, $logger);
+        $action = trim($_REQUEST['action'] ?? '');
+
+        // CSRF validation helper for state-mutating actions
+        $verifyCsrf = function () {
+            $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
+            if (!CSRF::validateToken($token)) {
+                echo json_encode([
+                    'ok'    => false,
+                    'error' => 'Invalid or expired CSRF security token. Please refresh the page.',
+                ]);
+                exit();
+            }
+        };
+
+        switch ($action) {
+            case 'get_types':
+                $types = $dm->getAvailableTypes();
+                echo json_encode(['ok' => true, 'types' => $types]);
+                exit();
+
+            case 'list_destinations':
+                $destinations = $dm->listDestinations();
+                $types = $dm->getAvailableTypes();
+                $formatted = [];
+
+                foreach ($destinations as $d) {
+                    $type = $d['type'] ?? '';
+                    $typeName = $types[$type]['name'] ?? strtoupper($type);
+                    $config = $d['config'] ?? [];
+
+                    // Generate target representation for table
+                    $target = '';
+                    try {
+                        $target = $dm->getRcloneTarget($d['id'])['target'] ?? '';
+                    } catch (\Exception $e) {
+                        $target = $config['path'] ?? $config['bucket'] ?? $config['container'] ?? '';
+                    }
+
+                    $lastTested = $config['_last_tested'] ?? null;
+                    $lastTestOk = isset($config['_last_test_ok']) ? (bool)$config['_last_test_ok'] : null;
+                    $lastTestMsg = $config['_last_test_msg'] ?? '';
+
+                    $formatted[] = [
+                        'id'                => (int)$d['id'],
+                        'name'              => $d['name'],
+                        'type'              => $type,
+                        'type_name'         => $typeName,
+                        'remote_target'     => $target,
+                        'enabled'           => (bool)$d['enabled'],
+                        'last_tested'       => $lastTested,
+                        'last_tested_short' => $lastTested ? date('M j, H:i', strtotime($lastTested)) : null,
+                        'last_test_ok'      => $lastTestOk,
+                        'last_test_msg'     => $lastTestMsg,
+                        'created_at'        => $d['created_at'],
+                    ];
+                }
+
+                echo json_encode(['ok' => true, 'destinations' => $formatted]);
+                exit();
+
+            case 'get_destination':
+                $id = (int)($_REQUEST['id'] ?? 0);
+                $dest = $dm->getDestination($id, false);
+                if (!$dest) {
+                    echo json_encode(['ok' => false, 'error' => 'Destination not found']);
+                    exit();
+                }
+
+                // Mask sensitive fields
+                $provider = $dm->getProvider($dest['type']);
+                $sensitive = $provider->getSensitiveFields();
+                foreach ($sensitive as $field) {
+                    if (!empty($dest['config'][$field])) {
+                        $dest['config'][$field] = '••••••••';
+                    }
+                }
+
+                echo json_encode(['ok' => true, 'destination' => $dest]);
+                exit();
+
+            case 'save_destination':
+                $verifyCsrf();
+                $id = (int)($_POST['id'] ?? 0);
+                $name = Validator::string($_POST['name'] ?? '', 100, 'name');
+                $type = Validator::string($_POST['type'] ?? '', 50, 'type');
+                $enabled = !empty($_POST['enabled']) ? 1 : 0;
+                $config = isset($_POST['config']) && is_array($_POST['config']) ? $_POST['config'] : [];
+
+                if (!$name) {
+                    echo json_encode(['ok' => false, 'error' => 'Destination name is required (max 100 characters).']);
+                    exit();
+                }
+
+                if ($id > 0) {
+                    $result = $dm->updateDestination($id, [
+                        'name'    => $name,
+                        'enabled' => $enabled,
+                        'config'  => $config,
+                    ]);
+                } else {
+                    $result = $dm->createDestination([
+                        'name'    => $name,
+                        'type'    => $type,
+                        'enabled' => $enabled,
+                        'config'  => $config,
+                    ]);
+                }
+
+                echo json_encode($result);
+                exit();
+
+            case 'test_destination':
+                $id = (int)($_REQUEST['id'] ?? 0);
+                $start = microtime(true);
+                $result = $dm->testDestination($id);
+                $latencyMs = round((microtime(true) - $start) * 1000, 1);
+                $result['latency_ms'] = $latencyMs;
+                echo json_encode($result);
+                exit();
+
+            case 'test_raw_config':
+                $type = Validator::string($_POST['type'] ?? '', 50, 'type');
+                $config = isset($_POST['config']) && is_array($_POST['config']) ? $_POST['config'] : [];
+                $start = microtime(true);
+                $result = $dm->testRawConfig($type, $config);
+                $latencyMs = round((microtime(true) - $start) * 1000, 1);
+                $result['latency_ms'] = $latencyMs;
+                echo json_encode($result);
+                exit();
+
+            case 'delete_destination':
+                $verifyCsrf();
+                $id = (int)($_REQUEST['id'] ?? 0);
+                $result = $dm->deleteDestination($id);
+                echo json_encode($result);
+                exit();
+
+            case 'toggle_status':
+                $verifyCsrf();
+                $id = (int)($_REQUEST['id'] ?? 0);
+                $enabled = !empty($_REQUEST['enabled']) ? 1 : 0;
+                $result = $dm->toggleDestination($id, (bool)$enabled);
+                echo json_encode($result);
+                exit();
+
+            default:
+                echo json_encode(['ok' => false, 'error' => 'Unknown action: ' . htmlspecialchars($action)]);
+                exit();
+        }
+    } catch (\Exception $e) {
+        echo json_encode([
+            'ok'    => false,
+            'error' => 'Internal error: ' . $e->getMessage(),
+        ]);
+        exit();
+    }
+}
+
+// ============================================================================
+// HTML DASHBOARD PAGE RENDER
+// ============================================================================
 try {
-    // Self-heal: re-add menu entry if missing (CWP updates may clobber 3rdparty.php).
-    // Delegates to the Installer so the entry format is identical to install-time.
+    // Self-heal: ensure menu entry in 3rdparty.php is intact
     $installer = new \CWP\RcloneCWP\Installer(null, null);
     $installer->selfHealMenuEntry();
 
-    // --- Render Dashboard ---
-    $db = Database::getInstance();
-    $logger = new Logger(RCLONE_LOG_DIR, $db);
-    $rcloneVer = Rclone::version() ?: 'rclone not found';
-
-    ?>
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">rcloneCWP <small><?php echo htmlspecialchars(RCLONE_VERSION); ?></small></h3>
-                    </div>
-                    <div class="panel-body">
-                        <div class="alert alert-info">
-                            <strong>Phase 1 Foundation</strong> — core library installed, ready for Phase 2 development.
-                        </div>
-
-                        <div class="table-responsive">
-                            <table class="table table-striped table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Component</th>
-                                        <th>Status</th>
-                                        <th>Details</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Database</td>
-                                        <td><span class="label label-success">Connected</span></td>
-                                        <td><?php echo htmlspecialchars($db->getConfig()['name']); ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td>rclone</td>
-                                        <td><span class="label label-success">Detected</span></td>
-                                        <td><?php echo htmlspecialchars($rcloneVer); ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Logger</td>
-                                        <td><span class="label label-success">Active</span></td>
-                                        <td><?php echo htmlspecialchars($logger->getLogDir()); ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Encryption</td>
-                                        <td><?php echo \CWP\RcloneCWP\Encryption::hasKeyFile() ? '<span class="label label-success">Key present</span>' : '<span class="label label-warning">No key</span>'; ?></td>
-                                        <td><?php echo htmlspecialchars(RCLONE_KEYFILE); ?></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="well well-sm">
-                            <h4>Next Steps</h4>
-                            <ul class="list-unstyled">
-                                <li>✓ Phase 1: Foundation (core library) — <strong>DONE</strong></li>
-                                <li>○ Phase 2: Destinations (12 backend types) — pending</li>
-                                <li>○ Phase 3: Backup Engine — pending</li>
-                                <li>○ Phase 4: Restore Engine — pending</li>
-                            </ul>
-                        </div>
-
-                        <div class="alert alert-warning">
-                            <strong>Note:</strong> This is a development build. Full UI and features coming in Phase 2+.
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <?php
+    // Render Master Tabbed Layout
+    $layoutFile = defined('RCLONE_VIEWS_DIR') ? RCLONE_VIEWS_DIR . '/layout.php' : $homeDir . '/views/layout.php';
+    if (file_exists($layoutFile)) {
+        require $layoutFile;
+    } else {
+        echo "<div class=\"alert alert-danger\">Views layout not found at: " . htmlspecialchars($layoutFile) . "</div>";
+    }
 } catch (\Exception $e) {
-    echo "<div class=\"alert alert-danger\"><strong>Error:</strong> " . htmlspecialchars($e->getMessage()) . "</div>";
+    echo "<div class=\"alert alert-danger\"><strong>rcloneCWP Error:</strong> " . htmlspecialchars($e->getMessage()) . "</div>";
 }

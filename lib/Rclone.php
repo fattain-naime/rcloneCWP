@@ -199,11 +199,12 @@ class Rclone
      * @param array $flagKeys Keys from the fixed flag map
      * @param array $flagValues Values for flags that take one
      * @param int|null $timeout Seconds; null = no timeout
+     * @param array $env Optional environment variables passed to the process (e.g. RCLONE_CONFIG_*)
      * @return array ['exit' => int, 'stdout' => string, 'stderr' => string, 'cmdline' => string]
      * @throws \InvalidArgumentException on rejected input
      * @throws \RuntimeException if rclone binary is missing or execution fails
      */
-    public static function execute($command, array $args = [], array $flagKeys = [], array $flagValues = [], $timeout = null)
+    public static function execute($command, array $args = [], array $flagKeys = [], array $flagValues = [], $timeout = null, array $env = [])
     {
         $cmdline = self::buildCommand($command, $args, $flagKeys, $flagValues);
 
@@ -213,7 +214,12 @@ class Rclone
             2 => ['pipe', 'w'],  // stderr
         ];
 
-        $proc = proc_open($cmdline, $descriptors, $pipes);
+        $procEnv = null;
+        if (!empty($env)) {
+            $procEnv = array_merge(getenv(), $env);
+        }
+
+        $proc = proc_open($cmdline, $descriptors, $pipes, null, $procEnv);
         if (!is_resource($proc)) {
             throw new \RuntimeException('proc_open failed for rclone execution');
         }

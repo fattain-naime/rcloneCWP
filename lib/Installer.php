@@ -243,6 +243,7 @@ class Installer
             $this->home => 0700,
             RCLONE_LIB_DIR => 0755,
             RCLONE_SQL_DIR => 0755,
+            RCLONE_VIEWS_DIR => 0755,
             RCLONE_LOG_DIR => 0700,
             RCLONE_CACHE_DIR => 0700,
         ];

@@ -109,6 +109,21 @@ class Database
     }
 
     /**
+     * Execute a query and fetch single column value from first row
+     *
+     * @param string $sql SQL query with placeholders
+     * @param array $params Parameters to bind
+     * @param int $column 0-indexed column number
+     * @return mixed Column value or false if no rows
+     */
+    public function fetchColumn(string $sql, array $params = [], int $column = 0)
+    {
+        $stmt = $this->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchColumn($column);
+    }
+
+    /**
      * Execute a query and return the statement
      *
      * @param string $sql SQL query with placeholders

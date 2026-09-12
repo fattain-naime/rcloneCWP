@@ -89,6 +89,14 @@ if [[ -n "${RCLONECWP_LOCAL:-}" ]]; then
     cp -r "$RCLONECWP_LOCAL" "$TMP_DIR/repo"
     rm -rf "$TMP_DIR/repo/.git"
 else
+    if [[ ! "$BRANCH" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+        err "Invalid branch name: $BRANCH"
+        exit 1
+    fi
+    if [[ ! "$REPO_URL" =~ ^https?://[a-zA-Z0-9._/-]+$ ]]; then
+        err "Invalid repository URL: $REPO_URL"
+        exit 1
+    fi
     log "Fetching rcloneCWP from $REPO_URL (branch: $BRANCH)..."
     git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$TMP_DIR/repo" || {
         err "Failed to clone repository"
@@ -114,16 +122,21 @@ chmod 644 "$MODULES_DIR/rcloneCWP.php"
 ok "Module entry deployed"
 
 log "Deploying runtime files to $HOME_DIR..."
-mkdir -p "$HOME_DIR/lib" "$HOME_DIR/sql"
+mkdir -p "$HOME_DIR/lib" "$HOME_DIR/sql" "$HOME_DIR/views"
 for f in config.php bootstrap.php install.php uninstall.php; do
     cp "$TMP_DIR/repo/$f" "$HOME_DIR/$f"
 done
-cp "$TMP_DIR/repo/lib/"*.php "$HOME_DIR/lib/"
+cp -r "$TMP_DIR/repo/lib/"* "$HOME_DIR/lib/"
+cp -r "$TMP_DIR/repo/views/"* "$HOME_DIR/views/"
 cp "$TMP_DIR/repo/sql/install.sql" "$HOME_DIR/sql/"
 chmod 700 "$HOME_DIR"
-chmod 644 "$HOME_DIR/config.php" "$HOME_DIR/bootstrap.php" "$HOME_DIR/lib/"*.php "$HOME_DIR/sql/install.sql"
+chmod 644 "$HOME_DIR/config.php" "$HOME_DIR/bootstrap.php" "$HOME_DIR/sql/install.sql"
+find "$HOME_DIR/lib" -type d -exec chmod 755 {} +
+find "$HOME_DIR/lib" -type f -exec chmod 644 {} +
+find "$HOME_DIR/views" -type d -exec chmod 755 {} +
+find "$HOME_DIR/views" -type f -exec chmod 644 {} +
 chmod 700 "$HOME_DIR/install.php" "$HOME_DIR/uninstall.php"
-chmod 755 "$HOME_DIR/lib" "$HOME_DIR/sql"
+chmod 755 "$HOME_DIR/lib" "$HOME_DIR/sql" "$HOME_DIR/views"
 ok "Runtime files deployed"
 
 # ============================================================================

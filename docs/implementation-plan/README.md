@@ -6,4 +6,5 @@ high-level `docs/IMPLEMENTATION-PLAN.md` timeline where they disagree.
 
 | File | Phase | Status |
 |------|-------|--------|
-| `01-phase1-foundation.md` | Phase 1 — Foundation | Draft for approval |
+| `01-phase1-foundation.md` | Phase 1 — Foundation | Completed & Verified |
+| `02-phase2-destinations.md` | Phase 2 — Destinations | Completed & Verified |

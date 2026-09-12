@@ -60,8 +60,8 @@ function rcloneGetCredentials(): array
     $db = [
         'host' => 'localhost',
         'name' => 'root_cwp',
-        'user' => 'root',
-        'pass' => ''
+        'user' => getenv('DB_USER') ?: '',
+        'pass' => getenv('DB_PASS') ?: '',
     ];
 
     // Try db_conn.php first (CWP standard)
@@ -159,6 +159,7 @@ define('RCLONE_MODULES_DIR', rcloneGetModulesDir());
 define('RCLONE_MODULE_FILE', RCLONE_MODULES_DIR . '/rcloneCWP.php');
 define('RCLONE_LIB_DIR', RCLONE_HOME . '/lib');
 define('RCLONE_SQL_DIR', RCLONE_HOME . '/sql');
+define('RCLONE_VIEWS_DIR', RCLONE_HOME . '/views');
 define('RCLONE_LOG_DIR', '/var/log/rcloneCWP');
 define('RCLONE_CACHE_DIR', '/var/cache/rcloneCWP');
 
