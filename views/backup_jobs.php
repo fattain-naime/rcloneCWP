@@ -310,11 +310,11 @@ if (!defined('RCLONE_VERSION')) {
     var CSRF_TOKEN = '<?php echo $csrfToken; ?>';
     function escapeHtml(str) {
         if (str === null || str === undefined) return "";
-        return String(str).replace(/&/g, '&')
-                           .replace(/</g, '<')
-                           .replace(/>/g, '>')
-                           .replace(/"/g, '"')
-                           .replace(/'/g, '&#039;');
+        return String(str).replace(/&/g, "&amp;")
+                           .replace(/</g, "&lt;")
+                           .replace(/>/g, "&gt;")
+                           .replace(/"/g, "&quot;")
+                           .replace(/'/g, "&#039;");
     }
 
     var availableDestinations = [];
