@@ -1,0 +1,45 @@
+#!/usr/bin/env php
+<?php
+/**
+ * rclone-schedule — Dedicated backup schedule & cron runner CLI
+ *
+ * Usage:
+ *   rclone-schedule list [--json]
+ *   rclone-schedule show <id> [--json]
+ *   rclone-schedule enable|disable <id>
+ *   rclone-schedule run-due [--json]
+ */
+
+if (php_sapi_name() !== 'cli') {
+    fwrite(STDERR, "Error: This script must be run from the command line.\n");
+    exit(1);
+}
+
+$bootstrapPaths = [
+    __DIR__ . '/../bootstrap.php',
+    '/usr/local/cwp/rcloneCWP/bootstrap.php',
+];
+
+$loaded = false;
+foreach ($bootstrapPaths as $path) {
+    if (is_file($path)) {
+        require_once $path;
+        $loaded = true;
+        break;
+    }
+}
+
+if (!$loaded) {
+    fwrite(STDERR, "Error: Cannot locate rcloneCWP bootstrap.php\n");
+    exit(1);
+}
+
+use CWP\RcloneCWP\CLI;
+
+// Rewrite argv to prepend 'schedule' command
+$newArgv = [$argv[0], 'schedule'];
+for ($i = 1; $i < count($argv); $i++) {
+    $newArgv[] = $argv[$i];
+}
+
+exit(CLI::main($newArgv));

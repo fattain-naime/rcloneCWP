@@ -17,7 +17,6 @@ if (!defined('RCLONE_VERSION')) {
 // PSR-4 Autoloader
 spl_autoload_register(function ($class) {
     $prefix = 'CWP\\RcloneCWP\\';
-    $baseDir = defined('RCLONE_LIB_DIR') ? RCLONE_LIB_DIR . '/' : __DIR__ . '/lib/';
 
     $len = strlen($prefix);
     if (strncmp($prefix, $class, $len) !== 0) {
@@ -25,9 +24,21 @@ spl_autoload_register(function ($class) {
     }
 
     $relativeClass = substr($class, $len);
-    $file = $baseDir . str_replace('\\', '/', $relativeClass) . '.php';
+    $relativeFile = str_replace('\\', '/', $relativeClass) . '.php';
 
-    if (file_exists($file)) {
-        require $file;
+    // Primary: check directory relative to this bootstrap.php file
+    $localFile = __DIR__ . '/lib/' . $relativeFile;
+    if (file_exists($localFile)) {
+        require $localFile;
+        return;
+    }
+
+    // Secondary: check RCLONE_LIB_DIR if defined and different
+    if (defined('RCLONE_LIB_DIR')) {
+        $configuredFile = RCLONE_LIB_DIR . '/' . $relativeFile;
+        if (file_exists($configuredFile)) {
+            require $configuredFile;
+            return;
+        }
     }
 });

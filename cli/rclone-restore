@@ -1,0 +1,44 @@
+#!/usr/bin/env php
+<?php
+/**
+ * rclone-restore — Dedicated snapshot inspection & account restore CLI
+ *
+ * Usage:
+ *   rclone-restore list <destination_id> [--json]
+ *   rclone-restore inspect <destination_id> <snapshot_path> [--json]
+ *   rclone-restore run <destination_id> <snapshot_path> <username> [--components=c1,c2] [--json]
+ */
+
+if (php_sapi_name() !== 'cli') {
+    fwrite(STDERR, "Error: This script must be run from the command line.\n");
+    exit(1);
+}
+
+$bootstrapPaths = [
+    __DIR__ . '/../bootstrap.php',
+    '/usr/local/cwp/rcloneCWP/bootstrap.php',
+];
+
+$loaded = false;
+foreach ($bootstrapPaths as $path) {
+    if (is_file($path)) {
+        require_once $path;
+        $loaded = true;
+        break;
+    }
+}
+
+if (!$loaded) {
+    fwrite(STDERR, "Error: Cannot locate rcloneCWP bootstrap.php\n");
+    exit(1);
+}
+
+use CWP\RcloneCWP\CLI;
+
+// Rewrite argv to prepend 'restore' command
+$newArgv = [$argv[0], 'restore'];
+for ($i = 1; $i < count($argv); $i++) {
+    $newArgv[] = $argv[$i];
+}
+
+exit(CLI::main($newArgv));

@@ -624,12 +624,15 @@ class Notification
             $items['Duration'] = $payload['duration'] . ' seconds';
         }
         if (isset($payload['error']) && $payload['error']) {
-            $items['Error Details'] = '<span style="color: #dc3545; font-weight: bold;">' . htmlspecialchars($payload['error']) . '</span>';
+            $items['Error Details'] = (string)$payload['error'];
         }
 
         foreach ($items as $k => $v) {
-            $html .= '<tr><td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: bold; width: 35%; color: #555;">' . htmlspecialchars($k) . '</td>';
-            $html .= '<td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #222;">' . (strpos($v, '<span') !== false ? $v : htmlspecialchars($v)) . '</td></tr>';
+            $valStyle = ($k === 'Error Details')
+                ? 'padding: 8px 12px; border-bottom: 1px solid #eee; color: #dc3545; font-weight: bold;'
+                : 'padding: 8px 12px; border-bottom: 1px solid #eee; color: #222;';
+            $html .= '<tr><td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: bold; width: 35%; color: #555;">' . htmlspecialchars($k, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</td>';
+            $html .= '<td style="' . $valStyle . '">' . htmlspecialchars($v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</td></tr>';
         }
 
         $html .= '</table>';

@@ -1,0 +1,46 @@
+#!/usr/bin/env php
+<?php
+/**
+ * rclone-destination — Dedicated storage destination management CLI
+ *
+ * Usage:
+ *   rclone-destination list [--json]
+ *   rclone-destination show <id> [--json]
+ *   rclone-destination test <id> [--json]
+ *   rclone-destination enable|disable <id>
+ *   rclone-destination delete <id>
+ */
+
+if (php_sapi_name() !== 'cli') {
+    fwrite(STDERR, "Error: This script must be run from the command line.\n");
+    exit(1);
+}
+
+$bootstrapPaths = [
+    __DIR__ . '/../bootstrap.php',
+    '/usr/local/cwp/rcloneCWP/bootstrap.php',
+];
+
+$loaded = false;
+foreach ($bootstrapPaths as $path) {
+    if (is_file($path)) {
+        require_once $path;
+        $loaded = true;
+        break;
+    }
+}
+
+if (!$loaded) {
+    fwrite(STDERR, "Error: Cannot locate rcloneCWP bootstrap.php\n");
+    exit(1);
+}
+
+use CWP\RcloneCWP\CLI;
+
+// Rewrite argv to prepend 'destination' command
+$newArgv = [$argv[0], 'destination'];
+for ($i = 1; $i < count($argv); $i++) {
+    $newArgv[] = $argv[$i];
+}
+
+exit(CLI::main($newArgv));
