@@ -407,7 +407,7 @@ if (!defined('RCLONE_VERSION')) {
                         if (lr.status === 'running') {
                             stBadge = '<span class="label label-warning"><i class="fa fa-spinner fa-spin"></i> Running</span>';
                         } else if (lr.status === 'failed') {
-                            stBadge = '<span class="label label-danger" title="' + (lr.error_message || '') + '"><i class="fa fa-times"></i> Failed</span>';
+                            stBadge = '<span class="label label-danger" title="' + escapeHtml(lr.error_message || '') + '"><i class="fa fa-times"></i> Failed</span>';
                         }
 
                         lastRunHtml = '<div>' + stBadge + ' <small class="text-muted" style="margin-left: 4px;">' + (lr.started_at ? lr.started_at.substring(5, 16) : '') + '</small></div>' +
@@ -688,7 +688,7 @@ if (!defined('RCLONE_VERSION')) {
                 $.each(resp.history, function(i, h) {
                     var st = '<span class="label label-success"><i class="fa fa-check"></i> Completed</span>';
                     if (h.status === 'running') st = '<span class="label label-warning"><i class="fa fa-spinner fa-spin"></i> Running</span>';
-                    if (h.status === 'failed') st = '<span class="label label-danger" title="' + (h.error_message || '') + '"><i class="fa fa-times"></i> Failed</span>';
+                    if (h.status === 'failed') st = '<span class="label label-danger" title="' + escapeHtml(h.error_message || '') + '"><i class="fa fa-times"></i> Failed</span>';
 
                     html += '<tr>' +
                         '<td><code>#' + h.id + '</code></td>' +
