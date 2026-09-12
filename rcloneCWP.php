@@ -41,6 +41,8 @@ use CWP\RcloneCWP\CSRF;
 use CWP\RcloneCWP\Database;
 use CWP\RcloneCWP\Destinations\DestinationManager;
 use CWP\RcloneCWP\Logger;
+use CWP\RcloneCWP\Restore\RestoreEngine;
+use CWP\RcloneCWP\Restore\SnapshotBrowser;
 use CWP\RcloneCWP\Validator;
 
 // ============================================================================
@@ -59,6 +61,8 @@ if (!empty($_REQUEST['ajax'])) {
         $dm = new DestinationManager($db, null, $logger);
         $bjm = new BackupJobManager($db, $dm, $logger);
         $discovery = new CwpAccountDiscovery($db);
+        $restoreEngine = new RestoreEngine($db, $dm, $logger);
+        $snapshotBrowser = new SnapshotBrowser($db, $dm, $logger);
         $action = trim($_REQUEST['action'] ?? '');
 
         // CSRF validation helper for state-mutating actions
@@ -280,6 +284,58 @@ if (!empty($_REQUEST['ajax'])) {
                 $limit = (int)($_REQUEST['limit'] ?? 50);
                 $history = $bjm->listHistory($jobId, $limit);
                 echo json_encode(['ok' => true, 'history' => $history]);
+                exit();
+
+            // ================================================================
+            // RESTORE ENGINE ENDPOINTS
+            // ================================================================
+            case 'list_snapshots':
+                $destId = (int)($_REQUEST['destination_id'] ?? 0);
+                if ($destId <= 0) {
+                    echo json_encode(['ok' => false, 'error' => 'A valid destination ID is required.']);
+                    exit();
+                }
+                $snapshotsResult = $snapshotBrowser->listSnapshots($destId);
+                echo json_encode($snapshotsResult);
+                exit();
+
+            case 'inspect_snapshot':
+                $destId = (int)($_REQUEST['destination_id'] ?? 0);
+                $path = Validator::string($_REQUEST['path'] ?? '', 1000, 'path');
+                if ($destId <= 0 || !$path) {
+                    echo json_encode(['ok' => false, 'error' => 'Destination ID and snapshot path are required.']);
+                    exit();
+                }
+                $inspectResult = $snapshotBrowser->inspectSnapshot($destId, $path);
+                echo json_encode($inspectResult);
+                exit();
+
+            case 'run_restore':
+                $verifyCsrf();
+                $destId = (int)($_POST['destination_id'] ?? 0);
+                $path = Validator::string($_POST['path'] ?? '', 1000, 'path');
+                $username = Validator::string($_POST['username'] ?? '', 100, 'username');
+                $components = isset($_POST['components']) && is_array($_POST['components']) ? $_POST['components'] : [];
+                $options = isset($_POST['options']) && is_array($_POST['options']) ? $_POST['options'] : [];
+
+                if ($destId <= 0 || !$path || !$username) {
+                    echo json_encode(['ok' => false, 'error' => 'Destination, snapshot path, and username are required.']);
+                    exit();
+                }
+
+                $restoreResult = $restoreEngine->executeRestore($destId, $path, $username, $components, $options);
+                echo json_encode($restoreResult);
+                exit();
+
+            case 'list_restore_history':
+                $limit = max(1, min(100, (int)($_REQUEST['limit'] ?? 50)));
+                $sql = "SELECT b.*, d.name AS destination_name, d.type AS destination_type " .
+                       "FROM rclone_backups b " .
+                       "LEFT JOIN rclone_destinations d ON b.destination_id = d.id " .
+                       "WHERE b.backup_type = 'restore' " .
+                       "ORDER BY b.id DESC LIMIT " . $limit;
+                $restores = $db->fetchAll($sql);
+                echo json_encode(['ok' => true, 'restores' => $restores]);
                 exit();
 
             default:

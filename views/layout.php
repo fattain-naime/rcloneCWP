@@ -65,10 +65,9 @@ $csrfToken = CSRF::generateToken();
                         <span id="tab-badge-jobs-count" class="badge" style="background: #337ab7; margin-left: 4px;">0</span>
                     </a>
                 </li>
-                <li class="disabled">
-                    <a href="#tab-restore" title="Coming in Phase 4" style="color: #888;">
+                <li>
+                    <a href="#tab-restore" data-toggle="tab" style="font-weight: 600;">
                         <i class="fa fa-history"></i> Restore
-                        <span class="badge" style="background: #ccc; font-size: 10px;">Phase 4</span>
                     </a>
                 </li>
                 <li class="disabled">
@@ -103,15 +102,9 @@ $csrfToken = CSRF::generateToken();
                     <?php require __DIR__ . '/backup_jobs.php'; ?>
                 </div>
 
-                <!-- TAB 4: RESTORE (PREVIEW) -->
+                <!-- TAB 4: RESTORE -->
                 <div class="tab-pane" id="tab-restore">
-                    <div class="alert alert-info text-center" style="padding: 40px 20px;">
-                        <i class="fa fa-history fa-3x" style="color: #31708f; margin-bottom: 15px;"></i>
-                        <h4>Granular Restore Engine (Phase 4)</h4>
-                        <p class="text-muted" style="max-width: 500px; margin: 0 auto 15px auto;">
-                            Phase 4 will enable full account restores, single-domain restores, database restoration, and cross-server CWP migrations from any storage destination.
-                        </p>
-                    </div>
+                    <?php require __DIR__ . '/restore.php'; ?>
                 </div>
 
                 <!-- TAB 5: SCHEDULES (PREVIEW) -->

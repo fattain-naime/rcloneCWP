@@ -51,9 +51,9 @@ CREATE TABLE IF NOT EXISTS rclone_schedules (
 -- Table 4: Backup History (NOT rcloneCWPs)
 CREATE TABLE IF NOT EXISTS rclone_backups (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  job_id INT NOT NULL,
+  job_id INT NULL,
   destination_id INT NULL,
-  backup_type ENUM('full', 'incremental', 'selective') NOT NULL,
+  backup_type ENUM('full', 'incremental', 'selective', 'restore') NOT NULL,
   status ENUM('pending', 'running', 'completed', 'failed', 'cancelled') NOT NULL DEFAULT 'pending',
   started_at DATETIME NOT NULL,
   completed_at DATETIME NULL,
@@ -61,7 +61,8 @@ CREATE TABLE IF NOT EXISTS rclone_backups (
   bytes_transferred BIGINT DEFAULT 0,
   duration_seconds INT NULL,
   error_message TEXT NULL,
-  config_id VARCHAR(50) NULL,
+  config_id VARCHAR(255) NULL,
+  notes TEXT NULL,
   FOREIGN KEY (job_id) REFERENCES rclone_jobs(id) ON DELETE CASCADE,
   FOREIGN KEY (destination_id) REFERENCES rclone_destinations(id) ON DELETE SET NULL,
   INDEX idx_job (job_id),
