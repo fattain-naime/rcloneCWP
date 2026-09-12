@@ -82,7 +82,7 @@ $hasKey = Encryption::hasKeyFile();
                     </div>
                 </div>
                 <div class="panel-footer" style="padding: 8px 15px; font-size: 12px; background: #fdfdfd;">
-                    <span class="pull-left"><?php echo htmlspecialchars(Rclone::getBinaryPath() ?: 'rclone'); ?></span>
+                    <span class="pull-left"><?php echo htmlspecialchars(Rclone::findBinary() ?: 'rclone'); ?></span>
                     <span class="pull-right text-info"><i class="fa fa-check"></i> Ready</span>
                     <div class="clearfix"></div>
                 </div>

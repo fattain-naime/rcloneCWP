@@ -105,6 +105,16 @@ class Rclone
     }
 
     /**
+     * Get rclone binary path (alias for findBinary)
+     *
+     * @return string|null
+     */
+    public static function getBinaryPath()
+    {
+        return self::findBinary();
+    }
+
+    /**
      * Build the shell-safe argument string for an rclone invocation.
      *
      * @param string $command Whitelisted subcommand

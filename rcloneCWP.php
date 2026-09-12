@@ -167,6 +167,7 @@ if (!empty($_REQUEST['ajax'])) {
                 exit();
 
             case 'test_destination':
+                $verifyCsrf();
                 $id = (int)($_REQUEST['id'] ?? 0);
                 $start = microtime(true);
                 $result = $dm->testDestination($id);
@@ -176,6 +177,7 @@ if (!empty($_REQUEST['ajax'])) {
                 exit();
 
             case 'test_raw_config':
+                $verifyCsrf();
                 $type = Validator::string($_POST['type'] ?? '', 50, 'type');
                 $config = isset($_POST['config']) && is_array($_POST['config']) ? $_POST['config'] : [];
                 $start = microtime(true);
