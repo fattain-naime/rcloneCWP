@@ -198,9 +198,10 @@ class RestoreEngine
                 throw new \Exception('Snapshot manifest has no username field.');
             }
             if ($manifestUser !== $username) {
-                throw new \Exception(
-                    "Username mismatch: requested '{$username}' but snapshot is for '{$manifestUser}'"
+                $this->logger->warning(
+                    "Restore username mismatch: request={$username} manifest={$manifestUser}"
                 );
+                throw new \Exception('Username mismatch between request and snapshot manifest.');
             }
             $targetUser = $manifestUser;
 
