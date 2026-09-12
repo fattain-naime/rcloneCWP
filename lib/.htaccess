@@ -1,0 +1,6 @@
+# Security: Deny all direct access to this directory
+<FilesMatch ".*">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+Allow from none

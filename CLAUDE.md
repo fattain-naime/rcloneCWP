@@ -6,15 +6,19 @@
 
 ## Module Location
 
-- **GitHub**: `github.com/fattain_naime/rcloneclwp` (MIT, user GitHub: fattain_naive)
+- **GitHub**: `github.com/fattain_naive/rcloneCWP` (MIT) — one-command install:
+  `curl -sSL https://raw.githubusercontent.com/fattain_naive/rcloneCWP/main/install.sh | bash`
 - **CWP Module Path**: `/usr/local/cwpsrv/htdocs/resources/admin/modules/rcloneCWP/`
+- **Off-htdocs runtime home**: `/usr/local/cwp/rcloneCWP/` (lib/, sql/, logs kept outside the web root)
 - **Workspace**: `/root/rcloneCWP/`
 
 ## Current Development Phase
 
 Research complete. Entering **Phase 1: Foundation (Days 1-5)**.
 
-See `docs/IMPLEMENTATION-PLAN.md` for the full roadmap.
+See `docs/implementation-plan/01-phase1-foundation.md` for the Phase 1 plan
+(detailed, approval-ready). The high-level 10-phase timeline is in
+`docs/IMPLEMENTATION-PLAN.md` (moved to `docs/temp/`).
 
 ## Tech Stack
 
@@ -120,13 +124,22 @@ rcloneCWP/
 
 - `docs/RESEARCH-AND-BLUEPRINT.md` — 68 KB complete blueprint
 - `docs/DEVELOPER-GUIDE.md` — 78 KB developer guide
-- `docs/IMPLEMENTATION-PLAN.md` — 14 KB phased timeline
+- `docs/IMPLEMENTATION-PLAN.md` — 14 KB phased timeline (high-level)
+- `docs/implementation-plan/01-phase1-foundation.md` — Phase 1 detailed plan
 - `sql/install.sql` — 10 KB database schema
 
 ## Important Notes
 
-- CWP modules run as **root** — full system access
-- ionCube encoding optional (plain PHP works)
-- Module accessible at `index.php?module=rcloneCWP`
-- Database credentials from `/usr/local/cwp/.conf/mysql_db.cnf`
-- All backup temp files in `/backup/.backup_temp/rclone/`
+- rcloneCWP is a **native CWP module**: plain PHP, runs as **root** via the CWP
+  php-fpm, loads inside `https://server:2030/index.php?module=rcloneCWP`.
+- **Host verified facts** (CLAUDE.md previously named CentOS and a non-existent
+  cred path): live host is **AlmaLinux 8.10**; CWP PHP is `/usr/local/cwp/php71/bin/php`
+  (**PHP 7.2.30** — code targets a **7.1+ floor**). Database credentials come
+  from `/usr/local/cwpsrv/htdocs/resources/admin/include/db_conn.php` at runtime
+  (with `/root/.my.cnf` as a fallback); `/usr/local/cwp/.conf/mysql_db.cnf`
+  **does not exist** on a real install.
+- Web server is nginx on the live box, but the module is written for **any**
+  CWP web server (Apache / nginx / LiteSpeed / OpenLiteSpeed).
+- Install method (both CLI-gated, root): one-command
+  `curl -sSL https://raw.githubusercontent.com/fattain_naive/rcloneCWP/main/install.sh | bash`,
+  or uninstall via `php uninstall.php` in the module dir.

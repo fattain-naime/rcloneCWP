@@ -1,0 +1,6 @@
+Deny from all
+Options -Indexes
+<FilesMatch "\.(php|json|conf|key)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
