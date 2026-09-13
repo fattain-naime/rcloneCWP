@@ -79,7 +79,7 @@ rclone version
 define('RCLONE_BIN_PATH', '/usr/local/bin/rclone'); // or wherever it's installed
 ```
 
-**For cron jobs, PATH may differ — use full path:**
+**For cron jobs, PATH may differ - use full path:**
 ```bash
 # Edit crontab manually if needed
 crontab -e
@@ -116,7 +116,7 @@ mysql -u root -p -e "SHOW DATABASES LIKE 'root_cwp';"
 ### Fixes
 
 **Wrong credentials:**
-The module reads CWP's db_conn.php at runtime — ensure it hasn't been modified. If your CWP uses a different credential file, edit `/usr/local/cwp/rcloneCWP/bootstrap.php` to point to it.
+The module reads CWP's db_conn.php at runtime - ensure it hasn't been modified. If your CWP uses a different credential file, edit `/usr/local/cwp/rcloneCWP/bootstrap.php` to point to it.
 
 **MySQL not running:**
 ```bash
@@ -218,7 +218,7 @@ ls -la /etc/rclone/rclone.conf
 ### Common Fixes
 
 **Destination config error:**
-The module reads destination config as a JSON blob from database — credentials are AES-256-GCM encrypted. Verify encryption key exists:
+The module reads destination config as a JSON blob from database - credentials are AES-256-GCM encrypted. Verify encryption key exists:
 ```bash
 ls -la /usr/local/cwp/rcloneCWP/.encryption.key
 cat /usr/local/cwp/rcloneCWP/.encryption.key | wc -c  # Should be 32 bytes
@@ -285,7 +285,7 @@ Increase rclone timeout in destination config:
 df -h /home/
 ```
 
-**Interrupted restore — resume:**
+**Interrupted restore - resume:**
 rclone supports `--ignore-existing` flag via extra args. Retrying will skip restored files.
 
 **Cross-server restore auth:**
@@ -419,7 +419,7 @@ head -1 /path/to/hook.sh
 - Files owned by root instead of expected user
 
 ### Critical Rule
-All files under `/home/<user>/` MUST stay `<user>:<user>` — never change to root.
+All files under `/home/<user>/` MUST stay `<user>:<user>` - never change to root.
 
 ### Diagnostic Commands
 
@@ -485,7 +485,7 @@ chown -R owndemo:owndemo /home/owndemo/
 ## How to Check Logs
 
 ### Module Activity Logs (Web UI)
-Go to **Settings → Activity Logs** tab — shows last 100 entries from today's log, color-coded by severity.
+Go to **Settings → Activity Logs** tab - shows last 100 entries from today's log, color-coded by severity.
 
 ### Log File Location
 ```
@@ -546,7 +546,7 @@ Output includes:
 ### Full Diagnostic Script
 ```bash
 #!/bin/bash
-# Run as root — saves to /tmp/rcloneCWP-diag-$(date +%Y%m%d).txt
+# Run as root - saves to /tmp/rcloneCWP-diag-$(date +%Y%m%d).txt
 
 echo "=== rcloneCWP Diagnostics $(date) ==="
 echo

@@ -99,11 +99,11 @@ Tests are in `tests/unit/` and `tests/` (root). Add tests for new functionality 
 
 ## Pull Request Guidelines
 
-1. **One feature/fix per PR** — keep changes focused.
+1. **One feature/fix per PR** - keep changes focused.
 2. **Include tests** when adding new functionality or fixing bugs.
 3. **Update documentation** if changing API behavior or adding features.
-4. **Follow existing patterns** — match the style of surrounding code.
-5. **No breaking changes** without discussion — open an issue first for architectural changes.
+4. **Follow existing patterns** - match the style of surrounding code.
+5. **No breaking changes** without discussion - open an issue first for architectural changes.
 
 ### Commit Messages
 
@@ -112,11 +112,7 @@ Tests are in `tests/unit/` and `tests/` (root). Add tests for new functionality 
 
 ## Security
 
-If you discover a security vulnerability, please do **not** open a public issue. Instead:
-
-1. Email the maintainers directly at [SECURITY_CONTACT — see README]
-2. Include a description of the vulnerability and steps to reproduce
-3. Allow reasonable time for a fix before public disclosure
+If you discover a security vulnerability, please do **not** open a public issue. Instead, see our [Security Policy](SECURITY.md) for responsible disclosure instructions.
 
 ## License
 

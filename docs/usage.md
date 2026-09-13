@@ -12,7 +12,7 @@
    - **S3**: Access Key, Secret Key, Region, Bucket, Endpoint (optional)
    - **SFTP**: Host, User, Port, Password or SSH Key path
    - **OneDrive/Dropbox/GCS/Azure**: Use OAuth flow (click "Authorize" button)
-5. Click **Test Connection** — verify success
+5. Click **Test Connection** - verify success
 6. Click **Save**
 
 ### 2. Create a Backup Job
@@ -70,8 +70,8 @@ The **Dashboard** tab provides:
 | GCS | Service Account JSON, Project ID, Bucket | Paste JSON or upload file |
 | Azure | Account Name, Account Key, Container | Or use SAS token |
 | B2 | Key ID, Application Key, Bucket | Backblaze B2 |
-| OneDrive | — | OAuth: click Authorize, grant permissions |
-| Dropbox | — | OAuth: click Authorize, grant permissions |
+| OneDrive | - | OAuth: click Authorize, grant permissions |
+| Dropbox | - | OAuth: click Authorize, grant permissions |
 | SFTP | Host, User, Port, Auth (Password/Key) | SSH key: paste private key or upload |
 | WebDAV | URL, User, Password | Nextcloud, ownCloud, etc. |
 | Swift | Auth URL, User, Password, Tenant, Container | OpenStack Swift |
@@ -79,12 +79,12 @@ The **Dashboard** tab provides:
 
 ### Test Connection
 
-Click **Test Connection** before saving — validates credentials and network reachability.
+Click **Test Connection** before saving - validates credentials and network reachability.
 
 ### Edit/Delete
 
 - **Edit**: Click pencil icon, modify, save
-- **Delete**: Click trash icon — only allowed if no jobs/schedules reference it
+- **Delete**: Click trash icon - only allowed if no jobs/schedules reference it
 
 ### Destination Encryption
 
@@ -177,7 +177,7 @@ This runner:
 
 1. Navigate to **Restore** tab
 2. Select **Destination** containing backups
-3. Browse snapshots — shows date, size, job name
+3. Browse snapshots - shows date, size, job name
 4. Select **Restore Type**:
    - **Full Restore**: Entire backup to original location
    - **Partial Restore**: Select specific accounts/paths
@@ -491,13 +491,13 @@ Error response:
 
 ## Tips & Best Practices
 
-1. **Test destinations** before creating jobs — saves time debugging
-2. **Use incremental backups** for large datasets — faster, less storage
-3. **Set retention policies** — prevents unlimited storage growth
-4. **Install crontab** — enables automatic scheduling
-5. **Monitor logs** — Activity Logs tab shows real-time status
+1. **Test destinations** before creating jobs - saves time debugging
+2. **Use incremental backups** for large datasets - faster, less storage
+3. **Set retention policies** - prevents unlimited storage growth
+4. **Install crontab** - enables automatic scheduling
+5. **Monitor logs** - Activity Logs tab shows real-time status
 6. **Use hooks** for custom integrations (Slack, email, custom APIs)
-7. **Test restores periodically** — ensures backups are valid
-8. **Keep rclone updated** — `rclone selfupdate` for latest provider support
-9. **Secure encryption key** — `/usr/local/cwp/rcloneCWP/.encryption.key` must stay 0600
-10. **Backup the encryption key** — without it, encrypted backups are unrecoverable
+7. **Test restores periodically** - ensures backups are valid
+8. **Keep rclone updated** - `rclone selfupdate` for latest provider support
+9. **Secure encryption key** - `/usr/local/cwp/rcloneCWP/.encryption.key` must stay 0600
+10. **Backup the encryption key** - without it, encrypted backups are unrecoverable

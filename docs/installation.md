@@ -19,17 +19,17 @@ curl -sSL https://raw.githubusercontent.com/fattain_naive/rcloneCWP/main/install
 
 ### What the installer does:
 
-1. **Preflight checks** — Verifies root access, curl/git availability, CWP installation, PHP binary, rclone presence
-2. **Fetch** — Clones the repository (depth 1, main branch) to a temporary directory
-3. **Deploy** — Copies files to two locations:
+1. **Preflight checks** - Verifies root access, curl/git availability, CWP installation, PHP binary, rclone presence
+2. **Fetch** - Clones the repository (depth 1, main branch) to a temporary directory
+3. **Deploy** - Copies files to two locations:
    - Web module entry: `/usr/local/cwpsrv/htdocs/resources/admin/modules/rcloneCWP.php`
    - Runtime home: `/usr/local/cwp/rcloneCWP/` (lib/, views/, cron/, sql/, config.php, bootstrap.php, install.php, uninstall.php)
-4. **Install** — Runs the PHP installer (CLI) which:
+4. **Install** - Runs the PHP installer (CLI) which:
    - Applies the database schema (8 tables)
    - Generates encryption key for AES-256-GCM
    - Creates required directories with secure permissions
    - Registers the module in CWP's 3rdparty menu
-5. **Report** — Prints the admin URL and summary
+5. **Report** - Prints the admin URL and summary
 
 ### Installer Options
 
@@ -266,4 +266,4 @@ rm -f /etc/rclone/rclone.conf
 curl -sSL https://raw.githubusercontent.com/fattain_naive/rcloneCWP/main/install.sh | bash
 ```
 
-The installer is idempotent — it backs up the existing encryption key and preserves database data.
+The installer is idempotent - it backs up the existing encryption key and preserves database data.
