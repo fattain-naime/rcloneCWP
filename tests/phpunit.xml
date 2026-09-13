@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.5/phpunit.xsd"
+    bootstrap="bootstrap.php"
+    colors="true"
+    beStrictAboutTestsThatDoNotTestAnything="false"
+    beStrictAboutOutputDuringTests="true"
+    beStrictAboutChangesToGlobalState="false"
+    executionOrder="depends,defects"
+    failOnWarning="false"
+    stopOnFailure="false"
+    cacheResult="false"
+>
+    <testsuites>
+        <testsuite name="Unit Tests">
+            <directory suffix="Test.php">./unit</directory>
+        </testsuite>
+        <testsuite name="Integration Tests">
+            <directory suffix="Test.php">./integration</directory>
+        </testsuite>
+        <testsuite name="Legacy Tests">
+            <directory suffix="_test.php">.</directory>
+            <exclude>./unit</exclude>
+            <exclude>./integration</exclude>
+        </testsuite>
+    </testsuites>
+
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">../lib</directory>
+        </whitelist>
+    </filter>
+
+    <logging>
+        <log type="coverage-html" target="./coverage" lowUpperBound="35" highLowerBound="70"/>
+        <log type="coverage-text" target="php://stdout" showUncoveredFiles="false"/>
+    </logging>
+
+    <php>
+        <ini name="memory_limit" value="512M"/>
+        <ini name="max_execution_time" value="300"/>
+        <env name="RCLONE_TEST_MODE" value="1"/>
+    </php>
+</phpunit>
