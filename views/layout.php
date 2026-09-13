@@ -92,6 +92,11 @@ $csrfToken = CSRF::generateToken();
                         <span id="tab-badge-notifs-count" class="badge" style="background: #2980b9; margin-left: 4px;">0</span>
                     </a>
                 </li>
+                <li>
+                    <a href="#tab-settings" data-toggle="tab" style="font-weight: 600;">
+                        <i class="fa fa-cog"></i> Settings
+                    </a>
+                </li>
             </ul>
         </div>
 
@@ -136,6 +141,11 @@ $csrfToken = CSRF::generateToken();
                 <!-- TAB 8: NOTIFICATIONS -->
                 <div class="tab-pane" id="tab-notifications">
                     <?php require __DIR__ . '/notifications.php'; ?>
+                </div>
+
+                <!-- TAB 9: SETTINGS -->
+                <div class="tab-pane" id="tab-settings">
+                    <?php require __DIR__ . '/settings.php'; ?>
                 </div>
             </div>
         </div>
