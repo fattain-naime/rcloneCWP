@@ -118,14 +118,12 @@ class Rclone
                 // Version guard: if RCLONE_BUNDLED_VERSION is defined, verify binary matches
                 if (defined('RCLONE_BUNDLED_VERSION')) {
                     if (!self::checkVersionMatch($candidate)) {
-                        // Version mismatch - log and continue to next candidate (allows fallback)
-                        error_log(sprintf(
-                            '[rcloneCWP] rclone version mismatch: expected %s, got %s (binary: %s)',
-                            RCLONE_BUNDLED_VERSION,
-                            self::getBinaryVersion($candidate) ?? 'unknown',
-                            $candidate
-                        ));
-                        continue;
+                        // Version mismatch - fail fast with clear error
+                        throw new \RuntimeException(
+                            "Bundled rclone version mismatch: expected " .
+                            RCLONE_BUNDLED_VERSION . ", got " .
+                            (self::getBinaryVersion($candidate) ?? 'unknown')
+                        );
                     }
                 }
                 self::$binary = $candidate;
@@ -229,9 +227,6 @@ class Rclone
             $parts[] = escapeshellarg($arg);
         }
 
-        // Flags: only fixed-map keys, values whitelisted by type
-        $parts[] = ''; // placeholder removed below; flags appended after args
-        array_pop($parts);
 
         foreach ($flagKeys as $key) {
             if (!is_string($key) || !array_key_exists($key, self::$flagMap)) {

@@ -40,7 +40,7 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
-for cmd in curl git; do
+for cmd in curl git unzip; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
         err "Required command not found: $cmd"
         exit 1
@@ -64,19 +64,27 @@ if [[ ! -x "$PHP_BIN" ]]; then
 fi
 ok "Using PHP: $PHP_BIN ($($PHP_BIN -r 'echo PHP_VERSION;'))"
 
-# Check rclone presence (warn only — module can run without it until first backup)
+# Check rclone presence – if missing, install via official script (pinned to v1.75.1)
 RCLONE_BIN=$(command -v rclone || echo "")
 if [[ -n "$RCLONE_BIN" ]]; then
     ok "rclone found: $RCLONE_BIN ($($RCLONE_BIN version 2>/dev/null | head -1))"
 else
-    log "WARNING: rclone not found — using bundled binary"
-    # Bundled binary location (after deployment) – will be copied by installer
-    BUNDLED_BIN="$HOME_DIR/bin/rclone"
-    if [[ -f "$BUNDLED_BIN" && -x "$BUNDLED_BIN" ]]; then
-        RCLONE_BIN="$BUNDLED_BIN"
-        ok "Bundled rclone binary used: $RCLONE_BIN"
+    log "rclone not found – installing via official script (v1.75.1)"
+    # Pin to the desired version and install
+    RCLONE_VERSION="v1.75.1" \
+        curl -fsSL "https://rclone.org/install.sh" | bash -s -- || { err "rclone installation failed"; exit 1; }
+    # Verify installation succeeded and version matches
+    RCLONE_BIN=$(command -v rclone)
+    if [[ -x "$RCLONE_BIN" ]]; then
+        INSTALLED_VER=$("$RCLONE_BIN" version 2>/dev/null | head -1 | awk '{print $2}')
+        REQUIRED_VER="v1.75.1"
+        if [[ "$INSTALLED_VER" != "$REQUIRED_VER" ]]; then
+            err "Installed rclone version $INSTALLED_VER does not match required $REQUIRED_VER"
+            exit 1
+        fi
+        ok "rclone installed: $RCLONE_BIN ($INSTALLED_VER)"
     else
-        err "Bundled rclone binary missing or not executable. Install manually or fix installer."
+        err "rclone install script completed but binary not found"
         exit 1
     fi
 fi
@@ -131,7 +139,8 @@ chmod 644 "$MODULES_DIR/rcloneCWP.php"
 ok "Module entry deployed"
 
 log "Deploying runtime files to $HOME_DIR..."
-mkdir -p "$HOME_DIR/lib" "$HOME_DIR/sql" "$HOME_DIR/views" "$HOME_DIR/cron"
+# Ensure directories created with secure permissions
+mkdir -p -m 755 "$HOME_DIR/lib" "$HOME_DIR/sql" "$HOME_DIR/views" "$HOME_DIR/cron"
 for f in config.php bootstrap.php install.php uninstall.php; do
     cp "$TMP_DIR/repo/$f" "$HOME_DIR/$f"
 done

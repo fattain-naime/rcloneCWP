@@ -47,8 +47,20 @@ function rcloneFindBinary(): ?string
     return null; // Not found
 }
 
-define('RCLONE_BINARY', rcloneFindBinary());
-define('RCLONE_BUNDLED_VERSION', 'v1.75.1');
+// Define RCLONE_HOME first
+if (!defined('RCLONE_HOME')) {
+    define('RCLONE_HOME', rcloneGetHome());
+}
+
+// Bundle version constant – must be defined before binary probe for guard
+if (!defined('RCLONE_BUNDLED_VERSION')) {
+    define('RCLONE_BUNDLED_VERSION', 'v1.75.1');
+}
+
+// Binary probe – now sees RCLONE_HOME and version constant
+if (!defined('RCLONE_BINARY')) {
+    define('RCLONE_BINARY', rcloneFindBinary());
+}
 
 /**
  * Probe chain for off-htdocs home directory
@@ -71,7 +83,8 @@ function rcloneGetHome(): string
     return $paths[0];
 }
 
-define('RCLONE_HOME', rcloneGetHome());
+// Remove duplicate RCLONE_HOME definition
+// define('RCLONE_HOME', rcloneGetHome());
 
 /**
  * Probe chain for credentials

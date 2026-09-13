@@ -14,16 +14,13 @@ if (!defined('RCLONE_VERSION')) {
     }
 }
 
-// Define RCLONE_PATH – prefer bundled binary if present
-if (defined('RCLONE_HOME')) {
-    $bundled = rtrim(RCLONE_HOME, '/').'/bin/rclone';
-    if (is_file($bundled) && is_executable($bundled)) {
-        define('RCLONE_PATH', $bundled);
-    } else {
-        define('RCLONE_PATH', RCLONE_BINARY);
-    }
-} else {
+// Define RCLONE_PATH – prefer bundled binary if present, else fallback to system binary, else empty string
+if (defined('RCLONE_PATH') && RCLONE_PATH) {
+    // already defined – keep
+} elseif (defined('RCLONE_BINARY') && RCLONE_BINARY) {
     define('RCLONE_PATH', RCLONE_BINARY);
+} else {
+    define('RCLONE_PATH', '');
 }
 
 spl_autoload_register(function ($class) {
