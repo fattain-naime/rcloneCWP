@@ -52,7 +52,15 @@ try {
     // POST /jobs/{id}/run
     if ($method === 'POST' && $id && $action === 'run') {
         $api->requirePermission('backup:run');
-        $input = json_decode(file_get_contents('php://input'), true) ?: [];
+        $rawInput = json_decode(file_get_contents('php://input'), true) ?: [];
+        // Whitelist run-override keys; only boolean flags are accepted.
+        $allowedKeys = ['dry_run'];
+        $input = [];
+        foreach ($allowedKeys as $k) {
+            if (array_key_exists($k, $rawInput)) {
+                $input[$k] = (bool)$rawInput[$k];
+            }
+        }
         $engine = new BackupEngine($api->getDatabase(), $dm, $api->getLogger());
         $res = $engine->runJob($id, $input);
         echo json_encode(['ok' => true, 'data' => $res], JSON_PRETTY_PRINT);

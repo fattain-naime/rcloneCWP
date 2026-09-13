@@ -600,7 +600,18 @@ class API
         $destId = (int)($data['destination_id'] ?? 0);
         $snapshotPath = trim($data['snapshot_path'] ?? '');
         $username = trim($data['username'] ?? '');
-        $components = $data['components'] ?? ['files', 'databases', 'dns', 'ssl', 'cron', 'mail'];
+
+        // Strict whitelist validation for snapshot_path and username
+        if (!preg_match('/^[a-zA-Z0-9_\/-]+$/', $snapshotPath) || strpos($snapshotPath, '..') !== false || $snapshotPath[0] === '-') {
+            throw new Exception("Invalid snapshot_path format", 400);
+        }
+        if (!preg_match('/^[a-zA-Z0-9_.-]+$/', $username) || $username[0] === '-') {
+            throw new Exception("Invalid username format", 400);
+        }
+
+        $allowedComps = ['files', 'databases', 'dns', 'ssl', 'cron', 'mail'];
+        $rawComps = is_array($data['components'] ?? null) ? $data['components'] : $allowedComps;
+        $components = array_values(array_intersect($rawComps, $allowedComps));
 
         if ($destId <= 0 || empty($snapshotPath) || empty($username)) {
             throw new Exception("Missing required fields: destination_id, snapshot_path, username", 400);
@@ -609,10 +620,10 @@ class API
         $dm = new DestinationManager($this->db, null, $this->logger);
         $restoreEngine = new RestoreEngine($this->db, $dm, $this->logger);
 
-        $result = $restoreEngine->executeRestore($destId, $snapshotPath, $username, [
-            'components' => $components,
+        $result = $restoreEngine->executeRestore($destId, $snapshotPath, $username, $components, [
             'dry_run' => !empty($data['dry_run']),
             'overwrite' => !empty($data['overwrite']),
+            'create_account' => !empty($data['create_account']),
         ]);
 
         return ['data' => $result, 'code' => 200];

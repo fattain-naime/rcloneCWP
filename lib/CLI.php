@@ -564,14 +564,19 @@ class CLI
                 $components = [];
                 $compVal = $this->flag('components', '');
                 if (!empty($compVal) && $compVal !== true) {
-                    $components = array_map('trim', explode(',', (string)$compVal));
-                }
-                $options = [];
-                foreach ($this->flags as $k => $v) {
-                    if (!in_array($k, ['json', 'no-color', 'nocolor'], true)) {
-                        $options[$k] = $v;
+                    $rawComps = array_map('trim', explode(',', (string)$compVal));
+                    $allowedComps = ['files', 'databases', 'dns', 'ssl', 'cron', 'mail'];
+                    foreach ($rawComps as $c) {
+                        if (in_array($c, $allowedComps, true)) {
+                            $components[] = $c;
+                        }
                     }
                 }
+                $options = [
+                    'dry_run' => !empty($this->flags['dry-run']) || !empty($this->flags['dry_run']),
+                    'overwrite' => !empty($this->flags['overwrite']),
+                    'create_account' => !empty($this->flags['create-account']) || !empty($this->flags['create_account']),
+                ];
                 $res = $engine->executeRestore(
                     $destinationId, $snapshotPath, $username, $components, $options
                 );
