@@ -1,13 +1,13 @@
-# Non-project workspace files (not part of the module itself)
+# Non-project workspace files
 .claude/
 .remember/
-rules/
-logs/
-CLAUDE_CODE_MASTER_PROMPT.txt
 
 # Dependencies
 vendor/
 composer.lock
+
+# Temporary docs (research, implementation plans)
+docs/temp/
 
 # OS/editor junk
 .DS_Store

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/images/logo.jpg" alt="rcloneCWP Logo" width="320">
+</p>
+
 # rcloneCWP
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -27,7 +31,7 @@ The module integrates natively into CWP's admin panel, runs as root via CWP's PH
 | **Flexible Scheduling** | Cron-based with retention policies (daily, weekly, monthly, custom) |
 | **Pre/Post Hooks** | Shell, PHP, or Python scripts at job/backup/global level |
 | **REST API** | Full CRUD for destinations, jobs, schedules, backups with API key auth |
-| **CLI Toolkit** | `rcloneCWP-cli.php` for automation and CI/CD integration |
+| **CLI Toolkit** | `cli/rcloneCWP`, `cli/rclone-restore`, `cli/rclone-destination` for automation and CI/CD integration |
 | **Cross-Server Restore** | Restore to different server with credential mapping |
 | **Real-time Progress** | WebSocket-free polling progress bars in CWP UI |
 | **Multi-language** | English & Bengali (extensible) |
@@ -168,7 +172,7 @@ cd /usr/local/cwp/rcloneCWP && php uninstall.php
 ```bash
 # Run from module directory
 cd /usr/local/cwp/rcloneCWP
-php cli/rcloneCWP-cli.php <command> [options]
+php cli/rcloneCWP <command> [options]
 ```
 
 | Command | Description |
@@ -212,7 +216,7 @@ Copyright (c) 2026 Fattain Naime
 
 ## Contributing
 
-Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
+Contributions welcome! Please read [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for:
 - Code style (PSR-12 + project additions)
 - Branch naming & commit conventions
 - Testing requirements
@@ -224,9 +228,18 @@ Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 ---
 
+## Contributors
+
+- **Fattain Naime** — Project creator & lead developer
+- **Chayan Molla** — [Logo Design](https://www.facebook.com/share/1DZz91wJA3/)
+
+---
+
 ## Links
 
 - **GitHub**: https://github.com/fattain_naive/rcloneCWP
-- **Documentation**: `/docs/` (RESEARCH-AND-BLUEPRINT.md, DEVELOPER-GUIDE.md, IMPLEMENTATION-PLAN.md)
+- **Documentation**: `/docs/` (see subdirectories for available docs)
+- **Changelog**: [.github/CHANGELOG.md](.github/CHANGELOG.md)
+- **Contributing**: [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md)
 - **CWP Module Path**: `/usr/local/cwpsrv/htdocs/resources/admin/modules/rcloneCWP.php`
 - **Runtime Home**: `/usr/local/cwp/rcloneCWP/`
