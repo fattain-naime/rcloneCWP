@@ -14,7 +14,7 @@
 ## One-Command Install (Recommended)
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/fattain_naive/rcloneCWP/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/fattain-naime/rcloneCWP/main/install.sh | bash
 ```
 
 ### What the installer does:
@@ -35,7 +35,7 @@ curl -sSL https://raw.githubusercontent.com/fattain_naive/rcloneCWP/main/install
 
 ```bash
 # Install from local checkout (development)
-RCLONECWP_LOCAL=/path/to/rcloneCWP curl -sSL https://raw.githubusercontent.com/fattain_naive/rcloneCWP/main/install.sh | bash
+RCLONECWP_LOCAL=/path/to/rcloneCWP curl -sSL https://raw.githubusercontent.com/fattain-naime/rcloneCWP/main/install.sh | bash
 
 # The script requires absolute path for RCLONECWP_LOCAL
 ```
@@ -46,7 +46,7 @@ If you prefer manual control or the one-command installer fails:
 
 ```bash
 # 1. Clone the repository
-git clone --depth 1 https://github.com/fattain_naive/rcloneCWP.git
+git clone --depth 1 https://github.com/fattain-naime/rcloneCWP.git
 cd rcloneCWP
 
 # 2. Deploy web module entry
@@ -263,7 +263,7 @@ rm -f /etc/rclone/rclone.conf
 
 ```bash
 # Re-run the installer (preserves database and configuration)
-curl -sSL https://raw.githubusercontent.com/fattain_naive/rcloneCWP/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/fattain-naime/rcloneCWP/main/install.sh | bash
 ```
 
 The installer is idempotent - it backs up the existing encryption key and preserves database data.

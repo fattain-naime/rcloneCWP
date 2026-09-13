@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # rcloneCWP One-Command Installer
 #
-# Usage: curl -sSL https://raw.githubusercontent.com/fattain_naive/rcloneCWP/main/install.sh | bash
+# Usage: curl -sSL https://raw.githubusercontent.com/fattain-naime/rcloneCWP/main/install.sh | bash
 #
 # Steps:
 #   1. Preflight  — confirm CWP present, root user, curl/git available
@@ -14,7 +14,7 @@ set -euo pipefail
 # ============================================================================
 # CONFIGURATION — pinned at release (see plan §9)
 # ============================================================================
-REPO_URL="https://github.com/fattain_naive/rcloneCWP.git"
+REPO_URL="https://github.com/fattain-naime/rcloneCWP.git"
 BRANCH="main"
 MODULES_DIR="/usr/local/cwpsrv/htdocs/resources/admin/modules"
 MODULE_FILE="${MODULES_DIR}/rcloneCWP.php"

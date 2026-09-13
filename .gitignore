@@ -5,10 +5,8 @@
 # Dependencies
 vendor/
 composer.lock
-
 # Temporary docs (research, implementation plans)
 docs/temp/
-
 # OS/editor junk
 .DS_Store
 Thumbs.db

@@ -9,10 +9,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/fattain_naive/rcloneCWP/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://github.com/fattain-naime/rcloneCWP/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://www.php.net/"><img src="https://img.shields.io/badge/PHP-7.1%2B-8892BF.svg" alt="PHP Version"></a>
   <a href="https://rclone.org/"><img src="https://img.shields.io/badge/rclone-1.75%2B-43A047.svg" alt="rclone Version"></a>
-  <a href="https://github.com/fattain_naive/rcloneCWP/actions"><img src="https://github.com/fattain_naive/rcloneCWP/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/fattain-naime/rcloneCWP/actions"><img src="https://github.com/fattain-naime/rcloneCWP/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 </p>
 
 ---
@@ -58,7 +58,7 @@ JetBackup5-level features at zero cost. 12 cloud providers, AES-256-GCM encrypti
 One-command install (run as root):
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/fattain_naive/rcloneCWP/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/fattain-naime/rcloneCWP/main/install.sh | bash
 ```
 
 For manual installation and detailed instructions, see the [Installation Guide](docs/installation.md).

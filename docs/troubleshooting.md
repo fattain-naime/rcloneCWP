@@ -24,7 +24,7 @@ grep -n "rcloneCWP" /usr/local/cwpsrv/htdocs/resources/admin/include/3rdparty.ph
 **If module file missing:**
 ```bash
 # Re-run installer
-curl -sSL https://raw.githubusercontent.com/fattain_naive/rcloneCWP/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/fattain-naime/rcloneCWP/main/install.sh | bash
 ```
 
 **If 3rdparty registration missing:**

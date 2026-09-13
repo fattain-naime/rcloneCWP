@@ -29,7 +29,7 @@ $homeDir = '/usr/local/cwp/rcloneCWP';
 if (!is_file($homeDir . '/bootstrap.php')) {
     echo "<h3>rcloneCWP runtime not found</h3>";
     echo "<p>Run the installer first:</p>";
-    echo "<pre>curl -sSL https://raw.githubusercontent.com/fattain_naive/rcloneCWP/main/install.sh | bash</pre>";
+    echo "<pre>curl -sSL https://raw.githubusercontent.com/fattain-naime/rcloneCWP/main/install.sh | bash</pre>";
     exit();
 }
 

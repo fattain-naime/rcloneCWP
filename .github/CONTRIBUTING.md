@@ -15,7 +15,7 @@ Thank you for considering contributing to rcloneCWP! This document provides guid
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/fattain_naive/rcloneCWP.git
+   git clone https://github.com/fattain-naime/rcloneCWP.git
    cd rcloneCWP
    ```
 
