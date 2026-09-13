@@ -303,7 +303,10 @@ $csrfToken = \CWP\RcloneCWP\CSRF::generateToken();
             } else if (type === 'php') {
                 $label.html('PHP Script Code <span class="text-danger">*</span>');
                 $help.html('Executed via CWP PHP (<code>/usr/local/cwp/php71/bin/php</code>). Context available in <code>$_SERVER[\'RCLONE_CTX_*\']</code>.');
-                $cmd.attr('rows', 8).attr('placeholder', '<?php\n$jobId = getenv("RCLONE_JOB_ID");\n// Custom logic\n');
+                var phpPlaceholder = '<' + '?php' + "\n";
+                phpPlaceholder += '$jobId = getenv("RCLONE_JOB_ID");' + "\n";
+                phpPlaceholder += '// Custom logic';
+                $cmd.attr('rows', 8).attr('placeholder', phpPlaceholder);
             } else if (type === 'python') {
                 $label.html('Python Script Code <span class="text-danger">*</span>');
                 $help.html('Executed via Python 3 (<code>/usr/bin/python3</code>). Context available in <code>os.environ</code>.');

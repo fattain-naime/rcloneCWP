@@ -5,6 +5,10 @@ rules/
 logs/
 CLAUDE_CODE_MASTER_PROMPT.txt
 
+# Dependencies
+vendor/
+composer.lock
+
 # OS/editor junk
 .DS_Store
 Thumbs.db

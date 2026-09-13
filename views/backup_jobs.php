@@ -307,7 +307,7 @@ if (!defined('RCLONE_VERSION')) {
 (function($) {
     'use strict';
 
-    var CSRF_TOKEN = '<?php echo $csrfToken; ?>';
+    var CSRF_TOKEN = <?php echo json_encode($csrfToken ?? '', JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
     function escapeHtml(str) {
         if (str === null || str === undefined) return "";
         return String(str).replace(/&/g, "&amp;")
@@ -423,16 +423,16 @@ if (!defined('RCLONE_VERSION')) {
                     html += '<tr data-id="' + j.id + '">' +
                         '<td><code>#' + j.id + '</code></td>' +
                         '<td>' +
-                            '<div style="font-weight: 600; color: #2c3e50;">' + $('<div>').text(j.name).html() + '</div>' +
+                            '<div style="font-weight: 600; color: #2c3e50;">' + escapeHtml(j.name) + '</div>' +
                             '<div style="margin-top: 3px;">' + typeBadge + '</div>' +
                         '</td>' +
                         '<td>' +
-                            '<div><i class="fa fa-cloud text-primary"></i> <strong>' + $('<div>').text(j.destination_name).html() + '</strong></div>' +
-                            '<small class="text-muted">' + (j.destination_type || '').toUpperCase() + '</small>' +
+                            '<div><i class="fa fa-cloud text-primary"></i> <strong>' + escapeHtml(j.destination_name) + '</strong></div>' +
+                            '<small class="text-muted">' + escapeHtml(j.destination_type || '').toUpperCase() + '</small>' +
                         '</td>' +
                         '<td>' + accountsText + '</td>' +
                         '<td>' + compBadges.join('') + '</td>' +
-                        '<td><span class="label label-default">' + j.retention_days + ' days</span></td>' +
+                        '<td><span class="label label-default">' + escapeHtml(j.retention_days) + ' days</span></td>' +
                         '<td>' + lastRunHtml + '</td>' +
                         '<td style="text-align: right;">' +
                             '<div class="btn-group">' +
@@ -521,7 +521,25 @@ if (!defined('RCLONE_VERSION')) {
         $('#modal-job-alert').empty();
         $('#acc-mode-all').prop('checked', true);
         $('#accounts-selection-box').hide();
-        loadDestinationsDropdown();
+
+        // Lazy-load destinations (with caching)
+        if (availableDestinations.length === 0) {
+            loadDestinationsDropdown();
+        } else {
+            // Use cached destinations
+            var opts = '<option value="">-- Select Destination --</option>';
+            $.each(availableDestinations, function(i, d) {
+                if (d.enabled) {
+                    opts += '<option value="' + d.id + '">' + $('<div>').text(d.name + ' (' + d.type_name + ')').html() + '</option>';
+                }
+            });
+            $('#job-destination').html(opts);
+        }
+
+        // Lazy-load accounts (load once)
+        if (availableAccounts.length === 0) {
+            loadAccountsList();
+        }
 
         if (jobId) {
             $('#modal-job-title').html('<i class="fa fa-pencil" style="color: #3498db; margin-right: 6px;"></i> Edit Backup Job #' + jobId);
@@ -585,8 +603,49 @@ if (!defined('RCLONE_VERSION')) {
     $('#form-backup-job').on('submit', function(e) {
         e.preventDefault();
         var $btn = $('#btn-save-job');
-        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
         $('#modal-job-alert').empty();
+
+        // Client-side validation
+        var jobName = $('#job-name').val().trim();
+        var destinationId = $('#job-destination').val();
+        var retentionDays = parseInt($('#job-retention').val(), 10);
+        var hasComponents = $('input[name="components[]"]:checked').length > 0;
+
+        if (!jobName) {
+            $('#modal-job-alert').html(
+                '<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> Job name is required.</div>'
+            );
+            return;
+        }
+        if (!destinationId) {
+            $('#modal-job-alert').html(
+                '<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> Please select a backup destination.</div>'
+            );
+            return;
+        }
+        if (isNaN(retentionDays) || retentionDays < 1 || retentionDays > 3650) {
+            $('#modal-job-alert').html(
+                '<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> Retention days must be between 1 and 3650.</div>'
+            );
+            return;
+        }
+        if (!hasComponents) {
+            $('#modal-job-alert').html(
+                '<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> Please select at least one component to back up.</div>'
+            );
+            return;
+        }
+        if ($('#acc-mode-selected').is(':checked')) {
+            var selectedAccounts = $('input[name="accounts[]"]:checked').length;
+            if (selectedAccounts === 0) {
+                $('#modal-job-alert').html(
+                    '<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> Please select at least one account.</div>'
+                );
+                return;
+            }
+        }
+
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
 
         var formData = $(this).serializeArray();
         formData.push({ name: 'ajax', value: 1 });
@@ -695,14 +754,14 @@ if (!defined('RCLONE_VERSION')) {
                     if (h.status === 'failed') st = '<span class="label label-danger" title="' + escapeHtml(h.error_message || '') + '"><i class="fa fa-times"></i> Failed</span>';
 
                     html += '<tr>' +
-                        '<td><code>#' + h.id + '</code></td>' +
+                        '<td><code>#' + escapeHtml(h.id) + '</code></td>' +
                         '<td><strong>' + $('<div>').text(h.job_name || 'Job #' + h.job_id).html() + '</strong></td>' +
-                        '<td><span class="label label-default">' + (h.backup_type || 'full') + '</span></td>' +
-                        '<td>' + (h.destination_name || '--') + '</td>' +
-                        '<td>' + (h.started_at || '--') + '</td>' +
-                        '<td>' + formatDuration(h.duration_seconds) + '</td>' +
-                        '<td>' + (h.files_count || 0) + '</td>' +
-                        '<td>' + formatBytes(h.bytes_transferred) + '</td>' +
+                        '<td><span class="label label-default">' + escapeHtml(h.backup_type || 'full') + '</span></td>' +
+                        '<td>' + escapeHtml(h.destination_name || '--') + '</td>' +
+                        '<td>' + escapeHtml(h.started_at || '--') + '</td>' +
+                        '<td>' + escapeHtml(formatDuration(h.duration_seconds)) + '</td>' +
+                        '<td>' + escapeHtml(h.files_count || 0) + '</td>' +
+                        '<td>' + escapeHtml(formatBytes(h.bytes_transferred)) + '</td>' +
                         '<td>' + st + '</td>' +
                     '</tr>';
                 });
@@ -747,11 +806,9 @@ if (!defined('RCLONE_VERSION')) {
     $('#btn-add-job').on('click', function() { openJobModal(); });
     $('#btn-refresh-jobs').on('click', function() { loadJobs(); });
 
-    // Initial Load
+    // Initial Load - only load jobs on page load; destinations/accounts loaded lazily when modal opens
     $(document).ready(function() {
         loadJobs();
-        loadDestinationsDropdown();
-        loadAccountsList();
     });
 
 })(jQuery);

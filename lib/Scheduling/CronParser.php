@@ -400,10 +400,10 @@ class CronParser
                         continue;
                     }
 
-                    // Find last valid minute
+                    // Find last valid minute (strictly before current time)
                     $maxMinute = -1;
                     foreach ($fields['minutes'] as $m) {
-                        if ($h < $hour || $m <= $minute) {
+                        if ($h < $hour || ($h === $hour && $m < $minute)) {
                             $maxMinute = $m;
                         }
                     }

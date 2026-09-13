@@ -16,7 +16,7 @@ use CWP\RcloneCWP\CSRF;
 $csrfToken = CSRF::generateToken();
 ?>
 
-<div class="container-fluid" style="padding-top: 15px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+<div class="container-fluid" style="padding-top: 15px; margin-left: 212px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
     <!-- Main Panel -->
     <div class="panel panel-default" style="border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
         <!-- Panel Header -->
@@ -49,14 +49,14 @@ $csrfToken = CSRF::generateToken();
         <div style="background: #eaeded; border-bottom: 1px solid #d5dbdb; padding: 10px 20px 0 20px;">
             <ul class="nav nav-tabs" id="rclonecwp-tabs" style="border-bottom: none; margin-bottom: 0;">
                 <li class="active">
-                    <a href="#tab-destinations" data-toggle="tab" style="font-weight: 600;">
-                        <i class="fa fa-cloud"></i> Destinations
-                        <span id="tab-badge-dest-count" class="badge" style="background: #337ab7; margin-left: 4px;">0</span>
+                    <a href="#tab-dashboard" data-toggle="tab" style="font-weight: 600;">
+                        <i class="fa fa-dashboard"></i> Dashboard
                     </a>
                 </li>
                 <li>
-                    <a href="#tab-overview" data-toggle="tab" style="font-weight: 600;">
-                        <i class="fa fa-dashboard"></i> Overview & Status
+                    <a href="#tab-destinations" data-toggle="tab" style="font-weight: 600;">
+                        <i class="fa fa-cloud"></i> Destinations
+                        <span id="tab-badge-dest-count" class="badge" style="background: #337ab7; margin-left: 4px;">0</span>
                     </a>
                 </li>
                 <li>
@@ -103,47 +103,52 @@ $csrfToken = CSRF::generateToken();
         <!-- Tab Panes Content -->
         <div class="panel-body" style="padding: 25px;">
             <div class="tab-content">
-                <!-- TAB 1: DESTINATIONS -->
-                <div class="tab-pane active" id="tab-destinations">
+                <!-- TAB 1: DASHBOARD -->
+                <div class="tab-pane active" id="tab-dashboard">
+                    <?php require __DIR__ . '/dashboard.php'; ?>
+                </div>
+
+                <!-- TAB 2: DESTINATIONS -->
+                <div class="tab-pane" id="tab-destinations">
                     <?php require __DIR__ . '/destinations.php'; ?>
                 </div>
 
-                <!-- TAB 2: OVERVIEW & STATUS -->
+                <!-- TAB 3: OVERVIEW & STATUS -->
                 <div class="tab-pane" id="tab-overview">
                     <?php require __DIR__ . '/overview.php'; ?>
                 </div>
 
-                <!-- TAB 3: BACKUP JOBS -->
+                <!-- TAB 4: BACKUP JOBS -->
                 <div class="tab-pane" id="tab-jobs">
                     <?php require __DIR__ . '/backup_jobs.php'; ?>
                 </div>
 
-                <!-- TAB 4: RESTORE -->
+                <!-- TAB 5: RESTORE -->
                 <div class="tab-pane" id="tab-restore">
                     <?php require __DIR__ . '/restore.php'; ?>
                 </div>
 
-                <!-- TAB 5: SCHEDULES -->
+                <!-- TAB 6: SCHEDULES -->
                 <div class="tab-pane" id="tab-schedules">
                     <?php require __DIR__ . '/schedules.php'; ?>
                 </div>
 
-                <!-- TAB 6: LOGS -->
+                <!-- TAB 7: LOGS -->
                 <div class="tab-pane" id="tab-logs">
                     <?php require __DIR__ . '/logs.php'; ?>
                 </div>
 
-                <!-- TAB 7: HOOKS -->
+                <!-- TAB 8: HOOKS -->
                 <div class="tab-pane" id="tab-hooks">
                     <?php require __DIR__ . '/hooks.php'; ?>
                 </div>
 
-                <!-- TAB 8: NOTIFICATIONS -->
+                <!-- TAB 9: NOTIFICATIONS -->
                 <div class="tab-pane" id="tab-notifications">
                     <?php require __DIR__ . '/notifications.php'; ?>
                 </div>
 
-                <!-- TAB 9: SETTINGS -->
+                <!-- TAB 10: SETTINGS -->
                 <div class="tab-pane" id="tab-settings">
                     <?php require __DIR__ . '/settings.php'; ?>
                 </div>
@@ -326,7 +331,7 @@ $csrfToken = CSRF::generateToken();
             var $alert = $(containerId);
             $alert.removeClass('alert-success alert-danger alert-info alert-warning')
                   .addClass('alert-' + type)
-                  .find('span').html(message);
+                  .find('span').text(message);  // Use .text() instead of .html() to prevent XSS
             $alert.show();
         },
 
@@ -341,7 +346,7 @@ $csrfToken = CSRF::generateToken();
                     self.types = res.types;
                     if (callback) callback();
                 } else {
-                    self.showAlert('#destinations-alert', 'Failed to load provider types: ' + (res.error || 'Unknown error'), 'danger');
+                    self.showAlert('#destinations-alert', 'Failed to load provider types: ' + selfEscape(res.error || 'Unknown error'), 'danger');
                 }
             }).fail(function() {
                 self.showAlert('#destinations-alert', 'Network error loading provider types.', 'danger');
@@ -363,7 +368,7 @@ $csrfToken = CSRF::generateToken();
                 } else {
                     $('#destinations-tbody').html(
                         '<tr><td colspan="7" class="text-center text-danger" style="padding: 20px;">' +
-                        'Error loading destinations: ' + (res.error || 'Unknown error') + '</td></tr>'
+                        'Error loading destinations: ' + selfEscape(res.error || 'Unknown error') + '</td></tr>'
                     );
                 }
             }).fail(function() {
@@ -549,7 +554,7 @@ $csrfToken = CSRF::generateToken();
                     self.renderDynamicFields(d.type, d.config || {});
                     $('#modal-destination').modal('show');
                 } else {
-                    self.showAlert('#destinations-alert', 'Error fetching destination details: ' + (res.error || 'Unknown error'), 'danger');
+                    self.showAlert('#destinations-alert', 'Error fetching destination details: ' + selfEscape(res.error || 'Unknown error'), 'danger');
                 }
             }).fail(function() {
                 self.showAlert('#destinations-alert', 'Network error loading destination details.', 'danger');
@@ -570,10 +575,10 @@ $csrfToken = CSRF::generateToken();
 
                 if (res && res.ok) {
                     $('#modal-destination').modal('hide');
-                    self.showAlert('#destinations-alert', '<strong>Success!</strong> ' + (res.message || 'Destination saved successfully.'), 'success');
+                    self.showAlert('#destinations-alert', 'Success! ' + selfEscape(res.message || 'Destination saved successfully.'), 'success');
                     self.loadDestinations();
                 } else {
-                    var errorMsg = res.error || 'Failed to save destination.';
+                    var errorMsg = selfEscape(res.error || 'Failed to save destination.');
                     if (res.errors) {
                         errorMsg += '<ul style="margin-top: 5px; margin-bottom: 0; padding-left: 20px;">';
                         for (var field in res.errors) {
@@ -601,13 +606,13 @@ $csrfToken = CSRF::generateToken();
             $.post(self.apiUrl + '&action=test_raw_config', data, function(res) {
                 $btn.prop('disabled', false).html(origHtml);
                 if (res && res.ok) {
-                    var successMsg = '<strong><i class="fa fa-check-circle"></i> Connection Verified!</strong> ' +
-                                     (res.message || 'Remote reachable and authenticated.') +
+                    var successMsg = 'Connection Verified! ' +
+                                     selfEscape(res.message || 'Remote reachable and authenticated.') +
                                      (res.latency_ms ? ' (' + res.latency_ms + ' ms)' : '');
                     self.showAlert('#modal-dest-alert', successMsg, 'success');
                 } else {
-                    var failMsg = '<strong><i class="fa fa-times-circle"></i> Connection Failed:</strong> ' +
-                                  (res.message || res.error || 'Failed to reach storage remote.');
+                    var failMsg = 'Connection Failed: ' +
+                                  selfEscape(res.message || res.error || 'Failed to reach storage remote.');
                     self.showAlert('#modal-dest-alert', failMsg, 'danger');
                 }
             }, 'json').fail(function() {
@@ -624,9 +629,9 @@ $csrfToken = CSRF::generateToken();
             $.post(self.apiUrl + '&action=test_destination&id=' + id, { csrf_token: self.csrfToken }, function(res) {
                 $btn.prop('disabled', false).html(origHtml);
                 if (res && res.ok) {
-                    self.showAlert('#destinations-alert', '<strong>Verified Destination #' + id + ':</strong> ' + (res.message || 'Connection test successful.'), 'success');
+                    self.showAlert('#destinations-alert', 'Verified Destination #' + id + ': ' + selfEscape(res.message || 'Connection test successful.'), 'success');
                 } else {
-                    self.showAlert('#destinations-alert', '<strong>Test Failed for Destination #' + id + ':</strong> ' + (res.message || res.error || 'Check credentials.'), 'danger');
+                    self.showAlert('#destinations-alert', 'Test Failed for Destination #' + id + ': ' + selfEscape(res.message || res.error || 'Check credentials.'), 'danger');
                 }
                 self.loadDestinations();
             }, 'json').fail(function() {
@@ -649,7 +654,7 @@ $csrfToken = CSRF::generateToken();
                     self.showAlert('#destinations-alert', 'Destination #' + id + ' deleted successfully.', 'success');
                     self.loadDestinations();
                 } else {
-                    self.showAlert('#destinations-alert', 'Failed to delete destination: ' + (res.error || 'Unknown error'), 'danger');
+                    self.showAlert('#destinations-alert', 'Failed to delete destination: ' + selfEscape(res.error || 'Unknown error'), 'danger');
                 }
             }, 'json').fail(function() {
                 $btn.prop('disabled', false).html(origHtml);
@@ -664,7 +669,7 @@ $csrfToken = CSRF::generateToken();
                 if (res && res.ok) {
                     self.loadDestinations();
                 } else {
-                    self.showAlert('#destinations-alert', 'Failed to update destination status: ' + (res.error || 'Unknown error'), 'danger');
+                    self.showAlert('#destinations-alert', 'Failed to update destination status: ' + selfEscape(res.error || 'Unknown error'), 'danger');
                 }
             }, 'json').fail(function() {
                 self.showAlert('#destinations-alert', 'Network error toggling status.', 'danger');

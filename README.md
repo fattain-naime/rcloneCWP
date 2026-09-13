@@ -1,370 +1,232 @@
 # rcloneCWP
 
-<div align="center">
-
-![rcloneCWP Logo](assets/rclonecwp-logo.svg)
-
-**Enterprise-grade backup & restore for CWP — powered by rclone**
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CWP](https://img.shields.io/badge/CWP-Pro-blue.svg)](https://control-webpanel.com/)
-[![rclone](https://img.shields.io/badge/rclone-v1.75+-green.svg)](https://rclone.org/)
-[![Status](https://img.shields.io/badge/Status-Research%20Complete-blue.svg)]()
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-black.svg)](https://github.com/fattain_naime/rcloneCWP)
+[![PHP Version](https://img.shields.io/badge/PHP-7.1%2B-8892BF.svg)](https://www.php.net/)
+[![rclone Version](https://img.shields.io/badge/rclone-1.75%2B-43A047.svg)](https://rclone.org/)
+[![CWP Compatible](https://img.shields.io/badge/CWP-CentOS%20WebPanel-FF6B35.svg)](http://centos-webpanel.com/)
 
-</div>
-
----
-
-## Overview
-
-**rcloneCWP** is a **free, open-source** native module for [CWP (CentOS Web Panel)](https://control-webpanel.com/) that provides enterprise-grade backup and restore functionality using [rclone](https://rclone.org/) as the transport layer.
-
-Matches [JetBackup5](https://www.jetbackup.com/) features at **zero cost** — with **70+ cloud destinations** instead of ~10.
+> **Free, open-source native CWP module for enterprise-grade cloud backup and restore using rclone as the transport layer. JetBackup5-level features at zero cost.**
 
 ---
 
-## Logos
+## Description
 
-<div align="center">
+rcloneCWP is a native CentOS Web Panel (CWP) module that brings enterprise-grade cloud backup and restore capabilities to CWP servers. By leveraging rclone's battle-tested cloud synchronization engine (70+ providers), it provides JetBackup5-level functionality—including incremental backups, multi-destination scheduling, pre/post hooks, REST API, and CLI tooling—completely free and open-source under the MIT license.
 
-| rcloneCWP | CWP Control Panel | rclone |
-|:---:|:---:|:---:|
-| ![rcloneCWP](assets/rclonecwp-logo-small.svg) | ![CWP](https://control-webpanel.com/images/cwp-logo.png) | ![rclone](https://rclone.org/img/logo_on_light__horizontal_color.svg) |
-| **This module** | **Target panel** | **Cloud engine** |
-
-</div>
-
----
-
-## Key Differentiators
-
-| Feature | JetBackup5 | rcloneCWP |
-|---------|------------|-----------|
-| **Cost** | $XX/month | **FREE** |
-| **Destinations** | ~10 | **70+** |
-| **Source Code** | Closed | **Open (MIT)** |
-| **CWP Native** | Add-on | **Built-in** |
-| **Custom Hooks** | Limited | **Full Shell/PHP/Python** |
-| **API** | RESTful | **RESTful + CLI** |
-
----
-
-## Supported Destinations
-
-### Phase 1 (Core)
-- ✅ Local
-- ✅ FTP / SFTP
-- ✅ Amazon S3
-- ✅ Google Drive
-- ✅ Google Cloud Storage
-- ✅ Backblaze B2
-- ✅ Wasabi
-- ✅ Dropbox
-- ✅ OneDrive
-
-### Phase 2 (Extended)
-- 🔜 Azure Blob
-- 🔜 WebDAV
-
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    CWP Admin Panel                          │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │              rcloneCWP Module (PHP)                   │  │
-│  │  ┌─────────┐ ┌──────────┐ ┌───────────┐ ┌────────┐  │  │
-│  │  │Dashboard│ │Backup    │ │Restore    │ │Destin. │  │  │
-│  │  │         │ │Jobs      │ │Manager    │ │Config  │  │  │
-│  │  └─────────┘ └──────────┘ └───────────┘ └────────┘  │  │
-│  │  ┌─────────┐ ┌──────────┐ ┌───────────┐ ┌────────┐  │  │
-│  │  │Schedules│ │Hooks     │ │Logs       │ │API     │  │  │
-│  │  │         │ │          │ │           │ │        │  │  │
-│  │  └─────────┘ └──────────┘ └───────────┘ └────────┘  │  │
-│  └──────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Core Engine (PHP)                         │
-│  ┌─────────────┐ ┌──────────────┐ ┌──────────────────────┐ │
-│  │ Backup      │ │ Restore      │ │ Scheduler            │ │
-│  │ Engine      │ │ Engine       │ │ (Cron Manager)       │ │
-│  └─────────────┘ └──────────────┘ └──────────────────────┘ │
-│  ┌─────────────┐ ┌──────────────┐ ┌──────────────────────┐ │
-│  │ Hook        │ │ Notification │ │ Encryption           │ │
-│  │ System      │ │ System       │ │ Manager              │ │
-│  └─────────────┘ └──────────────┘ └──────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    rclone Binary                             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │  rclone copy / move / sync / mount                   │  │
-│  │  Config: /etc/rclone/rclone.conf                     │  │
-│  │  VFS Cache: /var/cache/rclone/                       │  │
-│  └──────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Cloud Destinations                        │
-│  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐   │
-│  │S3    │ │GDrive│ │B2    │ │SFTP  │ │Dropbx│ │Azure │   │
-│  └──────┘ └──────┘ └──────┘ └──────┘ └──────┘ └──────┘   │
-└─────────────────────────────────────────────────────────────┘
-```
+The module integrates natively into CWP's admin panel, runs as root via CWP's PHP-FPM, and stores all runtime data (configs, encryption keys, logs) outside the web root for security.
 
 ---
 
 ## Features
 
-### Backup Types
-- **Full Backup** — Complete account snapshot
-- **Incremental Backup** — Changed files only
-- **Selective Backup** — User-selected components
-
-### Components
-- [x] Home directory files
-- [x] MySQL/MariaDB databases
-- [x] Email accounts
-- [x] DNS zones
-- [x] SSL certificates
-- [x] Cron jobs
-- [x] FTP accounts
-
-### Restore Types
-- [x] Full restore
-- [x] Partial restore (per-component)
-- [x] Cross-server restore (migration)
-
-### Scheduling
-- [x] Daily / Weekly / Monthly
-- [x] Custom cron expressions
-- [x] Interval-based (every N hours)
-- [x] Retention policies (count/time-based)
-
-### Security
-- [x] AES-256-GCM encryption for credentials
-- [x] Prepared statements (SQL injection prevention)
-- [x] CSRF tokens on all forms
-- [x] Input validation/sanitization
-- [x] Command whitelisting for rclone
-- [x] `escapeshellarg()` for all exec
-- [x] File permissions 0600 for sensitive files
-- [x] API rate limiting
-- [x] IP whitelist support
-
-### Hooks & Notifications
-- [x] Pre/post backup hooks
-- [x] Pre/post restore hooks
-- [x] Shell/PHP/Python hook scripts
-- [x] URL callbacks
-- [x] Email notifications
-- [x] Slack notifications
-- [x] Telegram notifications
-
-### API & CLI
-- [x] RESTful API (17 endpoints)
-- [x] CLI tools for automation
-- [x] API key management
-- [x] Rate limiting
-
----
-
-## Database Schema
-
-Tables are prefixed with `rclone_` to avoid CWP conflicts:
-
-| Table | Purpose |
-|-------|---------|
-| `rclone_destinations` | Backup destination configs |
-| `rclone_jobs` | Backup job definitions |
-| `rclone_schedules` | Schedule definitions |
-| `rclone_backups` | Backup history |
-| `rclone_hooks` | Hook definitions |
-| `rclone_logs` | Log entries |
-| `rclone_api_keys` | API authentication |
-| `rclone_notifications` | Notification configs |
-
----
-
-## API Reference
-
-### Authentication
-```
-Authorization: Bearer YOUR_API_KEY
-```
-
-### Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/destinations` | List destinations |
-| POST | `/api/v1/destinations` | Create destination |
-| GET | `/api/v1/destinations/{id}` | Get destination |
-| PUT | `/api/v1/destinations/{id}` | Update destination |
-| DELETE | `/api/v1/destinations/{id}` | Delete destination |
-| POST | `/api/v1/destinations/{id}/test` | Test destination |
-| GET | `/api/v1/jobs` | List backup jobs |
-| POST | `/api/v1/jobs` | Create backup job |
-| GET | `/api/v1/jobs/{id}` | Get backup job |
-| PUT | `/api/v1/jobs/{id}` | Update backup job |
-| DELETE | `/api/v1/jobs/{id}` | Delete backup job |
-| POST | `/api/v1/jobs/{id}/run` | Run backup job now |
-| GET | `/api/v1/backups` | List backups |
-| GET | `/api/v1/backups/{id}` | Get backup details |
-| DELETE | `/api/v1/backups/{id}` | Delete backup |
-| POST | `/api/v1/backups/{id}/restore` | Restore from backup |
-| GET | `/api/v1/schedules` | List schedules |
-| POST | `/api/v1/schedules` | Create schedule |
-| GET | `/api/v1/logs` | List logs |
-| GET | `/api/v1/status` | System status |
-
----
-
-## CLI Tools
-
-```bash
-# Backup management
-rcloneCWP job list
-rcloneCWP job run 1
-rcloneCWP job show 1
-
-# Restore
-rcloneCWP restore 123 --user=builderh
-
-# Destination management
-rcloneCWP destination list
-rcloneCWP destination test 1
-
-# Schedule management
-rcloneCWP schedule list
-
-# Logs
-rcloneCWP log view --lines=50
-
-# Status
-rcloneCWP status
-```
-
----
-
-## Installation
-
-### One-liner
-```bash
-curl -sSL https://raw.githubusercontent.com/fattain_naime/rcloneCWP/main/install.sh | bash
-```
-
-### Manual
-```bash
-# Clone repository
-cd /usr/local/cwpsrv/htdocs/resources/admin/modules/
-git clone https://github.com/fattain_naime/rcloneCWP.git
-
-# Set permissions
-chown -R root:root rcloneCWP/
-find rcloneCWP/ -type f -exec chmod 644 {} \;
-find rcloneCWP/ -type d -exec chmod 755 {} \;
-chmod 700 rcloneCWP/logs rcloneCWP/cache
-
-# Run installer
-php rcloneCWP/install.php
-
-# Add menu entry
-echo 'rcloneCWP|/index.php?module=rcloneCWP|fa fa-cloud|main' >> /usr/local/cwpsrv/htdocs/resources/admin/include/3rdparty.php
-
-# Add cron entries
-echo '*/5 * * * * root /usr/local/cwp/php71/bin/php /usr/local/cwpsrv/htdocs/resources/admin/modules/rcloneCWP/cron/rcloneCWP.php >> /var/log/rcloneCWP_cron.log 2>&1' >> /etc/crontab
-echo '0 2 * * * root /usr/local/cwp/php71/bin/php /usr/local/cwpsrv/htdocs/resources/admin/modules/rcloneCWP/cron/rcloneCWP_cleanup.php >> /var/log/rcloneCWP_cleanup.log 2>&1' >> /etc/crontab
-
-# Restart crond
-systemctl restart crond
-```
-
----
-
-## Development Timeline
-
-| Phase | Duration | Key Deliverable | Status |
-|-------|----------|-----------------|--------|
-| 1 | Days 1-5 | Foundation, DB, rclone wrapper | ⬜ |
-| 2 | Days 6-10 | All destinations | ⬜ |
-| 3 | Days 11-16 | Backup engine | ⬜ |
-| 4 | Days 17-22 | Restore engine | ⬜ |
-| 5 | Days 23-25 | Scheduling | ⬜ |
-| 6 | Days 26-29 | Hooks & notifications | ⬜ |
-| 7 | Days 30-34 | API & CLI | ⬜ |
-| 8 | Days 35-38 | Dashboard & UI polish | ⬜ |
-| 9 | Days 39-42 | Testing & QA | ⬜ |
-| 10 | Days 43-45 | Release v1.0.0 | ⬜ |
-
----
-
-## Documentation
-
-| Document | Purpose |
-|----------|---------|
-| [RESEARCH-AND-BLUEPRINT.md](docs/RESEARCH-AND-BLUEPRINT.md) | Complete research, architecture, DB schema, security |
-| [DEVELOPER-GUIDE.md](docs/DEVELOPER-GUIDE.md) | Coding standards, patterns, API reference |
-| [IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md) | 45-day development timeline |
-| [sql/install.sql](sql/install.sql) | Database schema |
+| Feature | Description |
+|---------|-------------|
+| **12+ Cloud Providers** | AWS S3, Google Cloud Storage, Azure Blob, Backblaze B2, Wasabi, DigitalOcean Spaces, SFTP, FTP, WebDAV, Dropbox, Google Drive, OneDrive |
+| **AES-256-GCM Encryption** | All destination credentials encrypted at rest; in-memory only during operations |
+| **Full & Incremental Backups** | Rsync-style incremental with hard-link deduplication |
+| **Flexible Scheduling** | Cron-based with retention policies (daily, weekly, monthly, custom) |
+| **Pre/Post Hooks** | Shell, PHP, or Python scripts at job/backup/global level |
+| **REST API** | Full CRUD for destinations, jobs, schedules, backups with API key auth |
+| **CLI Toolkit** | `rcloneCWP-cli.php` for automation and CI/CD integration |
+| **Cross-Server Restore** | Restore to different server with credential mapping |
+| **Real-time Progress** | WebSocket-free polling progress bars in CWP UI |
+| **Multi-language** | English & Bengali (extensible) |
+| **Email/Telegram/Slack Notifications** | Configurable per job or global |
 
 ---
 
 ## Requirements
 
-- **CWP Pro** (CentOS Web Panel)
-- **rclone** >= 1.60
-- **PHP** >= 7.1 (with CLI)
-- **MySQL/MariaDB** >= 5.5
-- **Root access**
+- **CWP** (CentOS Web Panel) Pro or free
+- **PHP** 7.1+ (CWP's PHP binary at `/usr/local/cwp/php71/bin/php`)
+- **rclone** 1.75.0+ (`/usr/bin/rclone` or `/usr/local/bin/rclone`)
+- **MariaDB/MySQL** (uses CWP's `root_cwp` database)
+- **Root access** for installation (module runs as root via CWP PHP-FPM)
+- **AlmaLinux 8 / CentOS 7+** (tested on AlmaLinux 8.10)
 
 ---
 
-## Contributing
+## Installation
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) first.
+One-command install (run as root):
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+```bash
+curl -sSL https://raw.githubusercontent.com/fattain_naive/rcloneCWP/main/install.sh | bash
+```
+
+The installer:
+1. Creates the off-htdocs runtime home at `/usr/local/cwp/rcloneCWP/`
+2. Installs the module to `/usr/local/cwpsrv/htdocs/resources/admin/modules/rcloneCWP.php`
+3. Registers the menu entry in CWP's `3rdparty.php`
+4. Creates the database schema (8 tables, prefixed `rclone_`)
+5. Generates an AES-256-GCM encryption key at `/usr/local/cwp/rcloneCWP/key.bin`
+6. Sets secure permissions (0600 configs, 0700 directories)
+
+**Uninstall:**
+
+```bash
+cd /usr/local/cwp/rcloneCWP && php uninstall.php
+```
+
+---
+
+## Quick Start
+
+1. **Access the module** — Log into CWP admin (`https://your-server:2030`) and click **Rclone Backup** in the sidebar
+2. **Add a destination** — Click *Destinations → Add New*, choose provider (e.g., S3), enter credentials, test connection, save
+3. **Create a backup job** — Click *Jobs → Add New*, select destination, choose what to backup (files, databases, DNS, email), set retention
+4. **Schedule it** — Click *Schedules → Add New*, link to your job, set cron expression (e.g., `0 2 * * *` for daily 2 AM), enable
+5. **Monitor** — Dashboard shows last run, next run, status, and real-time progress during backup
+
+---
+
+## Supported Providers
+
+| Provider | rclone Type | Notes |
+|----------|-------------|-------|
+| Amazon S3 | `s3` | All S3-compatible (Wasabi, MinIO, DigitalOcean Spaces, etc.) |
+| Google Cloud Storage | `google cloud storage` | Service account JSON |
+| Microsoft Azure Blob | `azureblob` | Account + key or SAS |
+| Backblaze B2 | `b2` | Application key |
+| Wasabi | `s3` | S3-compatible |
+| DigitalOcean Spaces | `s3` | S3-compatible |
+| SFTP | `sftp` | Key or password auth |
+| FTP | `ftp` | Explicit/implicit TLS |
+| WebDAV | `webdav` | Nextcloud, ownCloud, etc. |
+| Dropbox | `dropbox` | OAuth2 |
+| Google Drive | `drive` | OAuth2 / service account |
+| OneDrive | `onedrive` | OAuth2 |
+
+> Any rclone-supported backend works—configure via rclone's `rclone config` and reference the remote name.
+
+---
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    CWP Admin Panel (port 2030)              │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              rcloneCWP Module (rcloneCWP.php)        │   │
+│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐  │   │
+│  │  │Dashboard │ │Destinations│ │  Jobs   │ │Schedules│  │   │
+│  │  └──────────┘ └──────────┘ └──────────┘ └────────┘  │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Off-htdocs Runtime: /usr/local/cwp/rcloneCWP/  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────────┐  │
+│  │   lib/   │ │  sql/    │ │  logs/   │ │  key.bin (AES) │  │
+│  └──────────┘ └──────────┘ └──────────┘ └────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                              │
+              ┌───────────────┼───────────────┐
+              ▼               ▼               ▼
+       ┌────────────┐ ┌────────────┐ ┌────────────┐
+       │   rclone   │ │  Database  │ │   Cron     │
+       │ (transport)│ │ (root_cwp) │ │ (system)   │
+       └────────────┘ └────────────┘ └────────────┘
+```
+
+**Key design decisions:**
+- **Off-htdocs placement**: All sensitive files (encryption key, configs, logs) live outside `/htdocs` at `/usr/local/cwp/rcloneCWP/`
+- **In-memory credentials**: Decrypted destination secrets exist only in PHP memory during rclone execution—never written to disk or logged
+- **Database isolation**: 8 tables prefixed `rclone_` in CWP's existing `root_cwp` database
+- **Cron integration**: System crontab entries managed by the module, not CWP's backup cron
+
+---
+
+## API Reference
+
+**Base URL:** `https://your-server:2030/index.php?module=rcloneCWP&api=1`
+
+**Authentication:** Bearer token via `Authorization: Bearer <api_key>` header
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/destinations` | GET/POST | List/create backup destinations |
+| `/destinations/{id}` | GET/PUT/DELETE | Manage single destination |
+| `/jobs` | GET/POST | List/create backup jobs |
+| `/jobs/{id}` | GET/PUT/DELETE | Manage single job |
+| `/jobs/{id}/run` | POST | Trigger immediate backup |
+| `/schedules` | GET/POST | List/create schedules |
+| `/schedules/{id}` | GET/PUT/DELETE | Manage schedule |
+| `/backups` | GET | List backup history |
+| `/backups/{id}` | GET | Backup details & logs |
+| `/backups/{id}/restore` | POST | Initiate restore |
+| `/hooks` | GET/POST | List/create hooks |
+| `/notifications` | GET/POST | Notification configs |
+
+**Response format:** `{ "success": bool, "data": ..., "error": {...} }`
+
+---
+
+## CLI Reference
+
+```bash
+# Run from module directory
+cd /usr/local/cwp/rcloneCWP
+php cli/rcloneCWP-cli.php <command> [options]
+```
+
+| Command | Description |
+|---------|-------------|
+| `destination:list` | List all destinations |
+| `destination:test <id>` | Test destination connectivity |
+| `job:list` | List all jobs |
+| `job:run <id>` | Execute backup job now |
+| `job:status <id>` | Show last run status |
+| `schedule:list` | List schedules |
+| `schedule:enable <id>` / `disable <id>` | Toggle schedule |
+| `backup:list` | List backup history |
+| `backup:restore <id> [--target=server]` | Restore backup |
+| `hook:test <id>` | Test hook execution |
+| `config:show` | Show resolved configuration |
+| `version` | Show module version |
+
+---
+
+## Security Model
+
+- **Encryption at rest**: AES-256-GCM for all destination credentials (key in `/usr/local/cwp/rcloneCWP/key.bin`, 0600)
+- **No credential leakage**: Secrets decrypted only in memory during rclone exec; redacted in all logs
+- **Input validation**: All user input via `Validator.php` (whitelist + sanitization)
+- **SQL injection prevention**: 100% prepared statements
+- **XSS protection**: `htmlspecialchars()` on all output
+- **CSRF tokens**: On every form in the UI
+- **Command injection prevention**: `escapeshellarg()` on all `exec()`/`shell_exec()` calls
+- **File permissions**: Configs 0600, directories 0700, owned by root
+- **API authentication**: API keys with scoped permissions, rate limiting
 
 ---
 
 ## License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+MIT License — see [LICENSE](LICENSE) for details.
+
+Copyright (c) 2026 Fattain Naime
 
 ---
 
-## Credits
+## Contributing
 
-- **rclone** — [https://rclone.org/](https://rclone.org/) — The cloud sync engine
-- **CWP Control Panel** — [https://control-webpanel.com/](https://control-webpanel.com/) — The hosting panel
-- **JetBackup** — [https://www.jetbackup.com/](https://www.jetbackup.com/) — Feature reference
+Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Code style (PSR-12 + project additions)
+- Branch naming & commit conventions
+- Testing requirements
+- Pull request process
 
----
+**Report issues:** [GitHub Issues](https://github.com/fattain_naive/rcloneCWP/issues)
 
-## Support
-
-- 📧 **Email**: [your-email@example.com](mailto:your-email@example.com)
-- 💬 **Issues**: [GitHub Issues](https://github.com/fattain_naime/rcloneCWP/issues)
-- 📖 **Wiki**: [GitHub Wiki](https://github.com/fattain_naime/rcloneCWP/wiki)
+**Discussions:** [GitHub Discussions](https://github.com/fattain_naive/rcloneCWP/discussions)
 
 ---
 
-<div align="center">
+## Links
 
-**rcloneCWP** — Free. Open-source. Enterprise-grade.
-
-Made with ❤️ for the CWP community
-
-</div>
+- **GitHub**: https://github.com/fattain_naive/rcloneCWP
+- **Documentation**: `/docs/` (RESEARCH-AND-BLUEPRINT.md, DEVELOPER-GUIDE.md, IMPLEMENTATION-PLAN.md)
+- **CWP Module Path**: `/usr/local/cwpsrv/htdocs/resources/admin/modules/rcloneCWP.php`
+- **Runtime Home**: `/usr/local/cwp/rcloneCWP/`
