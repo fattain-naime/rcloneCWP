@@ -15,23 +15,44 @@ define('RCLONE_VERSION', '1.0.0-alpha');
 
 /**
  * Probe chain for rclone binary location
- * Follows OS conventions: /usr/local/bin, /usr/bin, then PATH
+ * Follows OS conventions: bundled binary first, then /usr/local/bin, /usr/bin, then PATH
  */
 function rcloneFindBinary(): ?string
 {
-    $binaries = ['/usr/local/bin/rclone', '/usr/bin/rclone'];
+    // First check bundled binary location if RCLONE_HOME is defined
+    if (defined('RCLONE_HOME')) {
+        $bundled = rtrim(RCLONE_HOME, '/') . '/bin/rclone';
+        if (is_file($bundled) && is_executable($bundled) && is_readable($bundled)) {
+            return $bundled;
+        }
+    }
+
+    // Then check system locations
+    $binaries = ['/usr/local/bin/rclone', '/usr/bin/rclone', '/bin/rclone'];
     foreach ($binaries as $binary) {
-        if (is_file($binary) && is_executable($binary)) {
+        if (is_file($binary) && is_executable($binary) && is_readable($binary)) {
             return $binary;
         }
     }
+
+    // Finally check PATH
+    $pathDirs = explode(PATH_SEPARATOR, getenv('PATH') ?: '');
+    foreach ($pathDirs as $dir) {
+        $candidate = rtrim($dir, '/') . '/rclone';
+        if (is_file($candidate) && is_executable($candidate) && is_readable($candidate)) {
+            return $candidate;
+        }
+    }
+
     return null; // Not found
 }
 
 define('RCLONE_BINARY', rcloneFindBinary());
+define('RCLONE_BUNDLED_VERSION', 'v1.75.1');
 
 /**
  * Probe chain for off-htdocs home directory
+ * Returns the first existing directory, or the primary path (to be created by installer)
  */
 function rcloneGetHome(): string
 {
@@ -46,7 +67,8 @@ function rcloneGetHome(): string
             return $path;
         }
     }
-    return $paths[0];  // Return the first path (even if it doesn't exist yet)
+    // No existing directory found - return primary path (installer will create it)
+    return $paths[0];
 }
 
 define('RCLONE_HOME', rcloneGetHome());

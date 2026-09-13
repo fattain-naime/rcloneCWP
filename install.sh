@@ -69,7 +69,16 @@ RCLONE_BIN=$(command -v rclone || echo "")
 if [[ -n "$RCLONE_BIN" ]]; then
     ok "rclone found: $RCLONE_BIN ($($RCLONE_BIN version 2>/dev/null | head -1))"
 else
-    log "WARNING: rclone not found — install it first: https://rclone.org/install/"
+    log "WARNING: rclone not found — using bundled binary"
+    # Bundled binary location (after deployment) – will be copied by installer
+    BUNDLED_BIN="$HOME_DIR/bin/rclone"
+    if [[ -f "$BUNDLED_BIN" && -x "$BUNDLED_BIN" ]]; then
+        RCLONE_BIN="$BUNDLED_BIN"
+        ok "Bundled rclone binary used: $RCLONE_BIN"
+    else
+        err "Bundled rclone binary missing or not executable. Install manually or fix installer."
+        exit 1
+    fi
 fi
 
 # ============================================================================

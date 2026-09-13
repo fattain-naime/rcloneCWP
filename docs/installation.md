@@ -118,7 +118,7 @@ mysql -u root -p root_cwp -e "SHOW TABLES LIKE 'rclone_%';"
 
 ```bash
 rclone version
-# Should show rclone v1.75.0 or higher
+# Should show rclone v1.75.1 or higher
 ```
 
 ### 6. Verify Encryption Key

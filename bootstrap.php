@@ -14,7 +14,18 @@ if (!defined('RCLONE_VERSION')) {
     }
 }
 
-// PSR-4 Autoloader
+// Define RCLONE_PATH – prefer bundled binary if present
+if (defined('RCLONE_HOME')) {
+    $bundled = rtrim(RCLONE_HOME, '/').'/bin/rclone';
+    if (is_file($bundled) && is_executable($bundled)) {
+        define('RCLONE_PATH', $bundled);
+    } else {
+        define('RCLONE_PATH', RCLONE_BINARY);
+    }
+} else {
+    define('RCLONE_PATH', RCLONE_BINARY);
+}
+
 spl_autoload_register(function ($class) {
     $prefix = 'CWP\\RcloneCWP\\';
 

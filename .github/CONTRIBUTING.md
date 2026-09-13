@@ -8,7 +8,7 @@ Thank you for considering contributing to rcloneCWP! This document provides guid
 
 - PHP 7.1+ (CWP uses `/usr/local/cwp/php71/bin/php`)
 - MySQL/MariaDB
-- rclone v1.75.0+
+- rclone v1.75.1+
 - CWP (CentOS Web Panel) installed
 
 ### Installation

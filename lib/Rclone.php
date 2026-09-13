@@ -78,9 +78,11 @@ class Rclone
     /**
      * Locate the rclone binary via probe chain.
      *
-     * Probe order: /usr/local/bin/rclone, /usr/bin/rclone, PATH lookup.
+     * Probe order: RCLONE_PATH (bundled), system locations, PATH lookup.
+     * Performs version guard against RCLONE_BUNDLED_VERSION if defined.
      *
      * @return string|null Binary path, or null if rclone is not installed
+     * @throws \RuntimeException if version guard fails
      */
     public static function findBinary()
     {
@@ -88,20 +90,89 @@ class Rclone
             return self::$binary;
         }
 
-        $candidates = [
+        $candidates = [];
+
+        // 1. First check RCLONE_PATH constant (bundled binary) - defined in bootstrap.php
+        if (defined('RCLONE_PATH')) {
+            $candidates[] = RCLONE_PATH;
+        }
+
+        // 2. System locations
+        $candidates = array_merge($candidates, [
             '/usr/local/bin/rclone',
             '/usr/bin/rclone',
             '/bin/rclone',
-        ];
+        ]);
+
+        // 3. PATH lookup
+        $pathDirs = explode(PATH_SEPARATOR, getenv('PATH') ?: '');
+        foreach ($pathDirs as $dir) {
+            $candidate = rtrim($dir, '/') . '/rclone';
+            if (!in_array($candidate, $candidates, true)) {
+                $candidates[] = $candidate;
+            }
+        }
 
         foreach ($candidates as $candidate) {
-            if (is_file($candidate) && is_executable($candidate)) {
+            if (is_file($candidate) && is_executable($candidate) && is_readable($candidate)) {
+                // Version guard: if RCLONE_BUNDLED_VERSION is defined, verify binary matches
+                if (defined('RCLONE_BUNDLED_VERSION')) {
+                    if (!self::checkVersionMatch($candidate)) {
+                        // Version mismatch - log and continue to next candidate (allows fallback)
+                        error_log(sprintf(
+                            '[rcloneCWP] rclone version mismatch: expected %s, got %s (binary: %s)',
+                            RCLONE_BUNDLED_VERSION,
+                            self::getBinaryVersion($candidate) ?? 'unknown',
+                            $candidate
+                        ));
+                        continue;
+                    }
+                }
                 self::$binary = $candidate;
                 return $candidate;
             }
         }
 
         return null;
+    }
+
+    /**
+     * Get the version string from an rclone binary.
+     *
+     * @param string $binary Path to rclone binary
+     * @return string|null Version string (e.g., "v1.75.1") or null on failure
+     */
+    private static function getBinaryVersion($binary)
+    {
+        $cmdline = escapeshellarg($binary) . ' version';
+        $output = shell_exec($cmdline . ' 2>/dev/null');
+        if ($output === null || $output === '') {
+            return null;
+        }
+        $firstLine = strtok(trim($output), "\n");
+        // Expected format: "rclone v1.75.1 ..."
+        if (preg_match('/^rclone\s+(v[\d.]+)/', $firstLine, $matches)) {
+            return $matches[1];
+        }
+        return null;
+    }
+
+    /**
+     * Check if a binary's version matches the expected bundled version.
+     *
+     * @param string $binary Path to rclone binary
+     * @return bool True if version matches, false otherwise
+     */
+    private static function checkVersionMatch($binary)
+    {
+        if (!defined('RCLONE_BUNDLED_VERSION')) {
+            return true; // No version to check against
+        }
+        $version = self::getBinaryVersion($binary);
+        if ($version === null) {
+            return false; // Can't determine version - treat as mismatch
+        }
+        return $version === RCLONE_BUNDLED_VERSION;
     }
 
     /**
