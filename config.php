@@ -83,9 +83,6 @@ function rcloneGetHome(): string
     return $paths[0];
 }
 
-// Remove duplicate RCLONE_HOME definition
-// define('RCLONE_HOME', rcloneGetHome());
-
 /**
  * Probe chain for credentials
  * Real server: db_conn.php -> mysql_db.cnf -> /root/.my.cnf

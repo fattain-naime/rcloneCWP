@@ -105,8 +105,21 @@ try {
     $cipher = $enc->encrypt($secret);
     check('encrypt() returns base64', base64_decode($cipher, true) !== false);
     check('round-trip: decrypt(encrypt(x)) === x', $enc->decrypt($cipher) === $secret);
-    check('decrypt("invalid") === false', $enc->decrypt('invalid') === false);
-    check('decrypt("") === false', $enc->decrypt('') === false);
+    $invalidThrew = false;
+    try {
+        $enc->decrypt('invalid');
+    } catch (\RuntimeException $e) {
+        $invalidThrew = true;
+    }
+    check('decrypt("invalid") throws RuntimeException', $invalidThrew);
+
+    $emptyThrew = false;
+    try {
+        $enc->decrypt('');
+    } catch (\RuntimeException $e) {
+        $emptyThrew = true;
+    }
+    check('decrypt("") throws RuntimeException', $emptyThrew);
     check('two encryptions differ (random nonce)', $enc->encrypt($secret) !== $cipher);
     @unlink($testKeyFile);
 } catch (\Exception $e) {

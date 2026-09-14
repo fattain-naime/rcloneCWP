@@ -266,36 +266,61 @@ class API
         $tempDir = defined('RCLONE_CACHE_DIR') ? RCLONE_CACHE_DIR : sys_get_temp_dir();
         $cacheFile = $tempDir . '/rclonecwp_ratelimit_' . md5($keyId . '_' . $ip) . '.json';
 
-        $requests = [];
-        if (file_exists($cacheFile)) {
-            $content = @file_get_contents($cacheFile);
-            if ($content) {
+        // Use flock for the entire read-modify-write cycle to prevent race conditions
+        $fp = @fopen($cacheFile, 'c+');
+        if ($fp === false) {
+            // If we can't open the file, allow the request but log the issue
+            error_log("rcloneCWP API: Failed to open rate limit cache file: $cacheFile");
+            return ['ok' => true];
+        }
+
+        if (!flock($fp, LOCK_EX)) {
+            fclose($fp);
+            error_log("rcloneCWP API: Failed to acquire lock on rate limit cache file: $cacheFile");
+            return ['ok' => true];
+        }
+
+        try {
+            $content = stream_get_contents($fp);
+            $requests = [];
+            if ($content !== false && $content !== '') {
                 $decoded = json_decode($content, true);
                 if (is_array($decoded)) {
                     $requests = $decoded;
                 }
             }
+
+            // Filter out timestamps outside current window
+            $activeRequests = array_values(array_filter($requests, function ($ts) use ($now, $window) {
+                return ($now - $ts) < $window;
+            }));
+
+            if (count($activeRequests) >= $limit) {
+                $oldestInWindow = min($activeRequests);
+                $retryAfter = max(1, $window - ($now - $oldestInWindow));
+                flock($fp, LOCK_UN);
+                fclose($fp);
+                return [
+                    'ok' => false,
+                    'error' => "Rate limit exceeded. Maximum {$limit} requests per minute.",
+                    'retry_after' => $retryAfter,
+                ];
+            }
+
+            $activeRequests[] = $now;
+            ftruncate($fp, 0);
+            rewind($fp);
+            fwrite($fp, json_encode($activeRequests));
+            flock($fp, LOCK_UN);
+            fclose($fp);
+
+            return ['ok' => true];
+        } catch (\Exception $e) {
+            flock($fp, LOCK_UN);
+            fclose($fp);
+            error_log("rcloneCWP API: Rate limit check failed: " . $e->getMessage());
+            return ['ok' => true]; // Fail open
         }
-
-        // Filter out timestamps outside current window
-        $activeRequests = array_values(array_filter($requests, function ($ts) use ($now, $window) {
-            return ($now - $ts) < $window;
-        }));
-
-        if (count($activeRequests) >= $limit) {
-            $oldestInWindow = min($activeRequests);
-            $retryAfter = max(1, $window - ($now - $oldestInWindow));
-            return [
-                'ok' => false,
-                'error' => "Rate limit exceeded. Maximum {$limit} requests per minute.",
-                'retry_after' => $retryAfter,
-            ];
-        }
-
-        $activeRequests[] = $now;
-        @file_put_contents($cacheFile, json_encode($activeRequests), LOCK_EX);
-
-        return ['ok' => true];
     }
 
     /**
@@ -903,7 +928,7 @@ class API
     }
 
     /**
-     * Send standard CORS headers
+     * Send standard CORS headers - restricted to CWP admin panel origin
      */
     private function sendCorsHeaders(): void
     {
@@ -911,7 +936,18 @@ class API
             return;
         }
 
-        header('Access-Control-Allow-Origin: *');
+        // Determine allowed origin - CWP admin panel typically on :2030
+        $allowedOrigins = [
+            'https://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ':2030',
+            'https://' . (gethostname() ?: 'localhost') . ':2030',
+        ];
+
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        if (in_array($origin, $allowedOrigins, true)) {
+            header('Access-Control-Allow-Origin: ' . $origin);
+            header('Access-Control-Allow-Credentials: true');
+        }
+
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
         header('Access-Control-Allow-Headers: Authorization, X-API-Key, Content-Type, Accept');
         header('Access-Control-Max-Age: 86400');

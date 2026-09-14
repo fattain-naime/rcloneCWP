@@ -98,11 +98,11 @@ if (!defined('RCLONE_VERSION')) {
 <!-- ======================================================================== -->
 <!-- MODAL: ADD / EDIT DESTINATION                                            -->
 <!-- ======================================================================== -->
-<div class="modal fade" id="modal-destination" tabindex="-1" role="dialog" data-backdrop="static">
+<div class="modal fade" id="modal-destination" tabindex="-1" role="dialog" aria-labelledby="modal-dest-title" data-backdrop="static">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header" style="background: #2c3e50; color: #fff;">
-                <button type="button" class="close" data-dismiss="modal" style="color: #fff; opacity: 0.8;">&times;</button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #fff; opacity: 0.8;">&times;</button>
                 <h4 class="modal-title" id="modal-dest-title">
                     <i class="fa fa-cloud"></i> Add Backup Destination
                 </h4>
@@ -112,7 +112,7 @@ if (!defined('RCLONE_VERSION')) {
                 <div class="modal-body" style="padding: 20px 25px;">
                     <!-- Inner Modal Alert -->
                     <div id="modal-dest-alert" class="alert" style="display: none;">
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button>
                         <span id="modal-dest-alert-msg"></span>
                     </div>
 
@@ -192,12 +192,12 @@ if (!defined('RCLONE_VERSION')) {
 <!-- ======================================================================== -->
 <!-- MODAL: DELETE CONFIRMATION                                               -->
 <!-- ======================================================================== -->
-<div class="modal fade" id="modal-delete-dest" tabindex="-1" role="dialog">
+<div class="modal fade" id="modal-delete-dest" tabindex="-1" role="dialog" aria-labelledby="modal-delete-dest-title">
     <div class="modal-dialog modal-sm" role="document" style="max-width: 440px;">
         <div class="modal-content">
             <div class="modal-header" style="background: #d9534f; color: #fff;">
-                <button type="button" class="close" data-dismiss="modal" style="color: #fff; opacity: 0.8;">&times;</button>
-                <h4 class="modal-title"><i class="fa fa-trash"></i> Delete Destination</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #fff; opacity: 0.8;">&times;</button>
+                <h4 class="modal-title" id="modal-delete-dest-title"><i class="fa fa-trash"></i> Delete Destination</h4>
             </div>
             <div class="modal-body" style="padding: 20px;">
                 <p>Are you sure you want to delete the backup destination:</p>
@@ -220,11 +220,11 @@ if (!defined('RCLONE_VERSION')) {
 <!-- ======================================================================== -->
 <!-- MODAL: CONNECTION TEST DIAGNOSTIC RESULT                                 -->
 <!-- ======================================================================== -->
-<div class="modal fade" id="modal-test-details" tabindex="-1" role="dialog">
+<div class="modal fade" id="modal-test-details" tabindex="-1" role="dialog" aria-labelledby="test-details-title">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header" id="test-details-header" style="background: #337ab7; color: #fff;">
-                <button type="button" class="close" data-dismiss="modal" style="color: #fff; opacity: 0.8;">&times;</button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #fff; opacity: 0.8;">&times;</button>
                 <h4 class="modal-title" id="test-details-title">
                     <i class="fa fa-stethoscope"></i> Connection Test Results
                 </h4>

@@ -436,16 +436,16 @@ if (!defined('RCLONE_VERSION')) {
                         '<td>' + lastRunHtml + '</td>' +
                         '<td style="text-align: right;">' +
                             '<div class="btn-group">' +
-                                '<button class="btn btn-xs btn-success btn-run-job" data-id="' + j.id + '" title="Run Now">' +
+                                '<button class="btn btn-xs btn-success btn-run-job" data-id="' + j.id + '" title="Run Now" aria-label="Run Backup Job">' +
                                     '<i class="fa fa-play"></i> Run' +
                                 '</button>' +
-                                '<button class="btn btn-xs btn-info btn-job-history" data-id="' + j.id + '" title="History">' +
+                                '<button class="btn btn-xs btn-info btn-job-history" data-id="' + j.id + '" title="History" aria-label="View Job History">' +
                                     '<i class="fa fa-history"></i>' +
                                 '</button>' +
-                                '<button class="btn btn-xs btn-default btn-edit-job" data-id="' + j.id + '" title="Edit">' +
+                                '<button class="btn btn-xs btn-default btn-edit-job" data-id="' + j.id + '" title="Edit" aria-label="Edit Backup Job">' +
                                     '<i class="fa fa-pencil"></i>' +
                                 '</button>' +
-                                '<button class="btn btn-xs btn-danger btn-delete-job" data-id="' + j.id + '" title="Delete">' +
+                                '<button class="btn btn-xs btn-danger btn-delete-job" data-id="' + j.id + '" title="Delete" aria-label="Delete Backup Job">' +
                                     '<i class="fa fa-trash"></i>' +
                                 '</button>' +
                             '</div>' +

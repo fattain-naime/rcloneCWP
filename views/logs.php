@@ -33,7 +33,7 @@ if (file_exists($todayLog) && is_readable($todayLog)) {
             </p>
         </div>
         <div class="col-xs-4 text-right">
-            <button type="button" class="btn btn-default btn-sm" onclick="location.reload();">
+            <button type="button" class="btn btn-default btn-sm" onclick="window.location.hash = '#tab-logs'; location.reload();">
                 <i class="fa fa-refresh"></i> Refresh Log
             </button>
         </div>

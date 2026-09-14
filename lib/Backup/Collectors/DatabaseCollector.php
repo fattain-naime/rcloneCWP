@@ -108,13 +108,20 @@ class DatabaseCollector implements ComponentCollectorInterface
 
     /**
      * Create a temporary client config file with mode 0600 so credentials never appear in ps aux.
+     * Uses tempnam() for guaranteed unique filename to prevent collisions.
      *
      * @param array $config
      * @return string Path to temporary .cnf file
      */
     private function createTempMysqlConfig(array $config): string
     {
-        $tempFile = sys_get_temp_dir() . '/.rclone_mysql_' . bin2hex(random_bytes(8)) . '.cnf';
+        $tempFile = tempnam(sys_get_temp_dir(), 'rclone_mysql_');
+        if ($tempFile === false) {
+            throw new \RuntimeException('Failed to create temporary MySQL config file');
+        }
+        // Ensure .cnf extension
+        $tempFile .= '.cnf';
+
         $content = "[client]\n";
         if (!empty($config['user'])) {
             $content .= "user=" . addcslashes($config['user'], "\"'\\") . "\n";

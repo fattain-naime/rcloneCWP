@@ -64,25 +64,35 @@ if [[ ! -x "$PHP_BIN" ]]; then
 fi
 ok "Using PHP: $PHP_BIN ($($PHP_BIN -r 'echo PHP_VERSION;'))"
 
-# Check rclone presence – if missing, install via official script (pinned to v1.75.1)
+# Check rclone presence – if missing or version mismatch, install/update via official script (pinned to v1.75.1)
+REQUIRED_VER="v1.75.1"
 RCLONE_BIN=$(command -v rclone || echo "")
+NEED_INSTALL=0
+
 if [[ -n "$RCLONE_BIN" ]]; then
-    ok "rclone found: $RCLONE_BIN ($($RCLONE_BIN version 2>/dev/null | head -1))"
+    INSTALLED_VER=$("$RCLONE_BIN" version 2>/dev/null | head -1 | awk '{print $2}')
+    if [[ "$INSTALLED_VER" == "$REQUIRED_VER" ]]; then
+        ok "rclone found: $RCLONE_BIN ($INSTALLED_VER)"
+    else
+        log "rclone found ($INSTALLED_VER), but required version is $REQUIRED_VER – updating via official script"
+        NEED_INSTALL=1
+    fi
 else
-    log "rclone not found – installing via official script (v1.75.1)"
-    # Pin to the desired version and install
-    RCLONE_VERSION="v1.75.1" \
+    log "rclone not found – installing via official script ($REQUIRED_VER)"
+    NEED_INSTALL=1
+fi
+
+if [[ "$NEED_INSTALL" -eq 1 ]]; then
+    RCLONE_VERSION="$REQUIRED_VER" \
         curl -fsSL "https://rclone.org/install.sh" | bash -s -- || { err "rclone installation failed"; exit 1; }
-    # Verify installation succeeded and version matches
     RCLONE_BIN=$(command -v rclone)
     if [[ -x "$RCLONE_BIN" ]]; then
         INSTALLED_VER=$("$RCLONE_BIN" version 2>/dev/null | head -1 | awk '{print $2}')
-        REQUIRED_VER="v1.75.1"
         if [[ "$INSTALLED_VER" != "$REQUIRED_VER" ]]; then
             err "Installed rclone version $INSTALLED_VER does not match required $REQUIRED_VER"
             exit 1
         fi
-        ok "rclone installed: $RCLONE_BIN ($INSTALLED_VER)"
+        ok "rclone ready: $RCLONE_BIN ($INSTALLED_VER)"
     else
         err "rclone install script completed but binary not found"
         exit 1

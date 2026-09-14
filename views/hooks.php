@@ -208,12 +208,12 @@ $csrfToken = \CWP\RcloneCWP\CSRF::generateToken();
 <!-- ========================================================================= -->
 <!-- MODAL: DELETE CONFIRMATION                                                -->
 <!-- ========================================================================= -->
-<div class="modal fade" id="modal-delete-hook" tabindex="-1" role="dialog">
+<div class="modal fade" id="modal-delete-hook" tabindex="-1" role="dialog" aria-labelledby="modal-delete-hook-title">
     <div class="modal-dialog modal-sm" role="document">
         <div class="modal-content">
             <div class="modal-header" style="background: #d9534f; color: #fff;">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title"><i class="fa fa-trash"></i> Delete Hook</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
+                <h4 class="modal-title" id="modal-delete-hook-title"><i class="fa fa-trash"></i> Delete Hook</h4>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to delete hook <strong id="delete-hook-name-display"></strong>?</p>
@@ -374,9 +374,9 @@ $csrfToken = \CWP\RcloneCWP\CSRF::generateToken();
                 html += '<td style="text-align: center;">' + (h.timeout || 300) + 's</td>';
                 html += '<td style="text-align: center;"><button type="button" class="btn btn-link btn-xs btn-toggle-hook" data-id="' + h.id + '" data-enabled="' + (h.enabled ? 1 : 0) + '" style="padding:0; text-decoration:none;">' + statusHtml + '</button></td>';
                 html += '<td style="text-align: right;">';
-                html += '<button type="button" class="btn btn-warning btn-xs btn-test-hook" data-id="' + h.id + '" title="Test Execution" style="margin-right: 3px;"><i class="fa fa-bolt"></i> Test</button>';
-                html += '<button type="button" class="btn btn-default btn-xs btn-edit-hook" data-id="' + h.id + '" title="Edit Hook" style="margin-right: 3px;"><i class="fa fa-pencil"></i></button>';
-                html += '<button type="button" class="btn btn-danger btn-xs btn-delete-hook" data-id="' + h.id + '" data-name="' + self.escapeHtml(h.name) + '" title="Delete Hook"><i class="fa fa-trash"></i></button>';
+                html += '<button type="button" class="btn btn-warning btn-xs btn-test-hook" data-id="' + h.id + '" title="Test Execution" aria-label="Test Hook Execution" style="margin-right: 3px;"><i class="fa fa-bolt"></i> Test</button>';
+                html += '<button type="button" class="btn btn-default btn-xs btn-edit-hook" data-id="' + h.id + '" title="Edit Hook" aria-label="Edit Hook" style="margin-right: 3px;"><i class="fa fa-pencil"></i></button>';
+                html += '<button type="button" class="btn btn-danger btn-xs btn-delete-hook" data-id="' + h.id + '" data-name="' + self.escapeHtml(h.name) + '" title="Delete Hook" aria-label="Delete Hook"><i class="fa fa-trash"></i></button>';
                 html += '</td>';
                 html += '</tr>';
             }

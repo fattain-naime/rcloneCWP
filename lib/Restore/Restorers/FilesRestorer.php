@@ -61,8 +61,19 @@ class FilesRestorer implements ComponentRestorerInterface
             ];
         }
 
-        // Check UID/GID consistency
-        $homeUid = (int)posix_getuid(); // Should ideally look up actual user UID
+        // Verify target user exists on system before attempting chown
+        $userInfo = @posix_getpwnam($username);
+        if ($userInfo === false) {
+            return [
+                'ok'       => false,
+                'restored' => [],
+                'bytes'    => 0,
+                'error'    => "Target user '{$username}' does not exist on this system. Cannot restore file ownership.",
+            ];
+        }
+        $targetUid = $userInfo['uid'];
+        $targetGid = $userInfo['gid'];
+        $escUidGid = escapeshellarg($targetUid . ':' . $targetGid);
 
         $restored = [];
         $totalBytes = 0;
@@ -108,8 +119,7 @@ class FilesRestorer implements ComponentRestorerInterface
                     $errors[] = 'tar extraction failed: ' . implode("\n", $output);
                 } else {
                     // CRITICAL: Restore user ownership on all extracted files
-                    $escUser = escapeshellarg($username);
-                    $chownCmd = "chown -R {$escUser}:{$escUser} {$escHome} 2>&1";
+                    $chownCmd = "chown -R {$escUidGid} {$escHome} 2>&1";
                     exec($chownCmd, $chownOut, $chownExit);
 
                     if ($chownExit === 0) {
@@ -171,8 +181,7 @@ class FilesRestorer implements ComponentRestorerInterface
             }
 
             // Ensure ownership is preserved for all restored content
-            $escUser = escapeshellarg($username);
-            $finalCmd = "chown -R {$escUser}:{$escUser} " . escapeshellarg($homeDir) . " 2>&1";
+            $finalCmd = "chown -R {$escUidGid} " . escapeshellarg($homeDir) . " 2>&1";
             exec($finalCmd, $out, $ret);
             if ($ret !== 0) {
                 $errors[] = 'Final chown failed: ' . implode("\n", $out);

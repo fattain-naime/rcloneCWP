@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS rclone_schedules (
   INDEX idx_active (active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Table 4: Backup History (NOT rcloneCWPs)
+-- Table 4: Backup History (NOT rclone_backups)
 CREATE TABLE IF NOT EXISTS rclone_backups (
   id INT AUTO_INCREMENT PRIMARY KEY,
   job_id INT NULL,

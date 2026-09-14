@@ -271,12 +271,12 @@ $csrfToken = \CWP\RcloneCWP\CSRF::generateToken();
 <!-- ========================================================================= -->
 <!-- MODAL: DELETE CONFIRMATION                                                -->
 <!-- ========================================================================= -->
-<div class="modal fade" id="modal-delete-notif" tabindex="-1" role="dialog">
+<div class="modal fade" id="modal-delete-notif" tabindex="-1" role="dialog" aria-labelledby="modal-delete-notif-title">
     <div class="modal-dialog modal-sm" role="document">
         <div class="modal-content">
             <div class="modal-header" style="background: #d9534f; color: #fff;">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title"><i class="fa fa-trash"></i> Delete Channel</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
+                <h4 class="modal-title" id="modal-delete-notif-title"><i class="fa fa-trash"></i> Delete Channel</h4>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to delete notification channel <strong id="delete-notif-name-display"></strong>?</p>
@@ -435,9 +435,9 @@ $csrfToken = \CWP\RcloneCWP\CSRF::generateToken();
                 html += '<td><code style="font-size: 11px; background: #f8f9fa; padding: 2px 6px; border-radius: 3px;">' + self.escapeHtml(endpointSummary) + '</code></td>';
                 html += '<td style="text-align: center;"><button type="button" class="btn btn-link btn-xs btn-toggle-notif" data-id="' + c.id + '" data-active="' + (c.active ? 1 : 0) + '" style="padding:0; text-decoration:none;">' + statusHtml + '</button></td>';
                 html += '<td style="text-align: right;">';
-                html += '<button type="button" class="btn btn-info btn-xs btn-test-notif" data-id="' + c.id + '" title="Send Test Alert" style="margin-right: 3px;"><i class="fa fa-paper-plane"></i> Test</button>';
-                html += '<button type="button" class="btn btn-default btn-xs btn-edit-notif" data-id="' + c.id + '" title="Edit Channel" style="margin-right: 3px;"><i class="fa fa-pencil"></i></button>';
-                html += '<button type="button" class="btn btn-danger btn-xs btn-delete-notif" data-id="' + c.id + '" data-name="' + self.escapeHtml(c.name) + '" title="Delete Channel"><i class="fa fa-trash"></i></button>';
+                html += '<button type="button" class="btn btn-info btn-xs btn-test-notif" data-id="' + c.id + '" title="Send Test Alert" aria-label="Send Test Alert" style="margin-right: 3px;"><i class="fa fa-paper-plane"></i> Test</button>';
+                html += '<button type="button" class="btn btn-default btn-xs btn-edit-notif" data-id="' + c.id + '" title="Edit Channel" aria-label="Edit Channel" style="margin-right: 3px;"><i class="fa fa-pencil"></i></button>';
+                html += '<button type="button" class="btn btn-danger btn-xs btn-delete-notif" data-id="' + c.id + '" data-name="' + self.escapeHtml(c.name) + '" title="Delete Channel" aria-label="Delete Channel"><i class="fa fa-trash"></i></button>';
                 html += '</td>';
                 html += '</tr>';
             }

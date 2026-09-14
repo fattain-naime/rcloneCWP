@@ -136,18 +136,16 @@ class Logger
      */
     private function writeToFile($level, $entry)
     {
-        $file = $this->logDir . '/rcloneCWP.log';
         $date = date('Y-m-d');
 
         // Append to daily rotated file
         $logFile = $this->logDir . '/rcloneCWP.' . $date . '.log';
 
-        if (!is_file($logFile)) {
-            @touch($logFile);
-            @chmod($logFile, 0600);
-        }
-
-        @file_put_contents($logFile, $entry . PHP_EOL, FILE_APPEND);
+        // Secure: use umask to ensure file created with 0600 permissions
+        // then write with FILE_APPEND | LOCK_EX to avoid race conditions
+        $oldUmask = umask(0077);
+        @file_put_contents($logFile, $entry . PHP_EOL, FILE_APPEND | LOCK_EX);
+        umask($oldUmask);
     }
 
     /**

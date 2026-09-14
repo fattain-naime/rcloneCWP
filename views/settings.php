@@ -13,7 +13,6 @@ if (!defined('RCLONE_VERSION')) {
 
 use CWP\RcloneCWP\CSRF;
 use CWP\RcloneCWP\Scheduling\CrontabService;
-use CWP\RcloneCWP\Scheduling\ScheduleManager;
 
 $csrfToken = CSRF::generateToken();
 
@@ -166,7 +165,7 @@ try {
                             <th style="width: 40%;">rclone Binary</th>
                             <td>
                                 <code><?php echo htmlspecialchars(\CWP\RcloneCWP\Rclone::getBinaryPath() ?: 'Not installed'); ?></code>
-                                <span class="text-muted" style="margin-left: 8px;">(<?php echo htmlspecialchars(\CWP\RcloneCWP\Rclone::version()['version'] ?? 'unknown'); ?>)</span>
+                                <span class="text-muted" style="margin-left: 8px;">(<?php echo htmlspecialchars(\CWP\RcloneCWP\Rclone::version() ?: 'unknown'); ?>)</span>
                             </td>
                         </tr>
                         <tr>
@@ -264,6 +263,8 @@ try {
 </div>
 
 <script>
+var settingsApiUrl = 'index.php?module=rcloneCWP&ajax=1';
+
 function csrfHeaders() {
     return { 'X-CSRF-Token': '<?php echo htmlspecialchars($csrfToken); ?>' };
 }
@@ -273,7 +274,7 @@ function installCrontab() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Installing...';
 
-    fetch('?ajax=install_crontab', {
+    fetch(settingsApiUrl + '&action=install_crontab', {
         method: 'POST',
         headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, csrfHeaders()),
         body: 'csrf_token=<?php echo htmlspecialchars($csrfToken); ?>'
@@ -300,7 +301,7 @@ function uninstallCrontab() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Uninstalling...';
 
-    fetch('?ajax=uninstall_crontab', {
+    fetch(settingsApiUrl + '&action=uninstall_crontab', {
         method: 'POST',
         headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, csrfHeaders()),
         body: 'csrf_token=<?php echo htmlspecialchars($csrfToken); ?>'
@@ -318,10 +319,11 @@ function uninstallCrontab() {
 }
 
 function refreshCrontabStatus() {
-    fetch('?ajax=get_crontab_status')
+    fetch(settingsApiUrl + '&action=get_crontab_status')
     .then(function(r) { return r.json(); })
     .then(function(data) {
         if (data.ok) {
+            window.location.hash = '#tab-settings';
             location.reload();
         }
     });

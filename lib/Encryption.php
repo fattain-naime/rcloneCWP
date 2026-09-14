@@ -96,7 +96,6 @@ class Encryption
         }
 
         $ivLength = 12; // GCM recommended IV length
-        $tagLength = 16; // GCM recommended tag length
 
         $iv = random_bytes($ivLength);
         $tag = '';
@@ -125,7 +124,7 @@ class Encryption
      *
      * @param string $encryptedData Base64-wrapped encrypted data
      * @return string Decrypted data
-     * @return bool Returns false if decryption fails or data is invalid
+     * @throws \RuntimeException if decryption fails or data is invalid
      */
     public function decrypt($encryptedData)
     {
@@ -134,35 +133,35 @@ class Encryption
         }
 
         if (!is_string($encryptedData)) {
-            return false;
+            throw new \RuntimeException('Encrypted data must be a string');
         }
 
-        try {
-            $data = base64_decode($encryptedData, true);
-            if ($data === false || strlen($data) < 28) { // 12 + 16 + minimum ciphertext
-                return false;
-            }
-
-            $ivLength = 12;
-            $tagLength = 16;
-
-            $iv = substr($data, 0, $ivLength);
-            $tag = substr($data, $ivLength, $tagLength);
-            $ciphertext = substr($data, $ivLength + $tagLength);
-
-            $plaintext = openssl_decrypt(
-                $ciphertext,
-                'aes-256-gcm',
-                $this->key,
-                OPENSSL_RAW_DATA,
-                $iv,
-                $tag
-            );
-
-            return $plaintext !== false ? $plaintext : false;
-        } catch (\Exception $e) {
-            return false;
+        $data = base64_decode($encryptedData, true);
+        if ($data === false || strlen($data) < 28) { // 12 + 16 + minimum ciphertext
+            throw new \RuntimeException('Invalid encrypted data format');
         }
+
+        $ivLength = 12;
+        $tagLength = 16;
+
+        $iv = substr($data, 0, $ivLength);
+        $tag = substr($data, $ivLength, $tagLength);
+        $ciphertext = substr($data, $ivLength + $tagLength);
+
+        $plaintext = openssl_decrypt(
+            $ciphertext,
+            'aes-256-gcm',
+            $this->key,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag
+        );
+
+        if ($plaintext === false) {
+            throw new \RuntimeException('Decryption failed: authentication tag mismatch or data corrupted');
+        }
+
+        return $plaintext;
     }
 
     /**

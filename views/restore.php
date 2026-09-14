@@ -10,6 +10,8 @@
 if (!defined('RCLONE_VERSION')) {
     exit('Direct access not allowed');
 }
+
+$csrfToken = \CWP\RcloneCWP\CSRF::generateToken();
 ?>
 
 <div class="row">
@@ -77,12 +79,12 @@ if (!defined('RCLONE_VERSION')) {
 </div>
 
 <!-- RESTORE MODAL -->
-<div class="modal fade" id="modal-restore-snapshot" tabindex="-1" role="dialog" data-backdrop="static">
+<div class="modal fade" id="modal-restore-snapshot" tabindex="-1" role="dialog" aria-labelledby="modal-restore-title" data-backdrop="static">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content" style="border-radius: 4px;">
             <div class="modal-header" style="background: #2c3e50; color: #fff; border-bottom: 2px solid #1a252f;">
-                <button type="button" class="close" data-dismiss="modal" style="color: #fff; opacity: 0.8;">&times;</button>
-                <h4 class="modal-title" style="font-weight: 600;">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #fff; opacity: 0.8;">&times;</button>
+                <h4 class="modal-title" id="modal-restore-title" style="font-weight: 600;">
                     <i class="fa fa-history" style="color: #3498db; margin-right: 6px;"></i>
                     Restore Account Snapshot: <span id="modal-restore-user" style="color: #3498db;">--</span>
                 </h4>
@@ -228,12 +230,12 @@ if (!defined('RCLONE_VERSION')) {
 </div>
 
 <!-- RESTORE HISTORY MODAL -->
-<div class="modal fade" id="modal-restore-history" tabindex="-1" role="dialog">
+<div class="modal fade" id="modal-restore-history" tabindex="-1" role="dialog" aria-labelledby="modal-restore-history-title">
     <div class="modal-dialog modal-lg" role="document" style="width: 90%;">
         <div class="modal-content" style="border-radius: 4px;">
             <div class="modal-header" style="background: #2c3e50; color: #fff;">
-                <button type="button" class="close" data-dismiss="modal" style="color: #fff;">&times;</button>
-                <h4 class="modal-title">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #fff;">&times;</button>
+                <h4 class="modal-title" id="modal-restore-history-title">
                     <i class="fa fa-history"></i> Restoration Execution History
                 </h4>
             </div>

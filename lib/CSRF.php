@@ -2,7 +2,7 @@
 /**
  * rcloneCWP CSRF Protection
  *
- * Session-bound synchronizer token pattern
+ * Session-bound synchronizer token pattern with timestamp-based expiration
  * PSR-12 compliant, PHP 7.1+ compatible
  * @package CWP\RcloneCWP
  */
@@ -17,7 +17,12 @@ class CSRF
     const SESSION_KEY = 'rclone_csrf_token';
 
     /**
-     * Generate a CSRF token
+     * Maximum token age in seconds (24 hours)
+     */
+    const TOKEN_MAX_AGE = 86400;
+
+    /**
+     * Generate a CSRF token with timestamp
      *
      * @return string The generated token (hex, 64 chars)
      */
@@ -28,7 +33,10 @@ class CSRF
         }
 
         $token = bin2hex(random_bytes(32));
-        $_SESSION[self::SESSION_KEY] = $token;
+        $_SESSION[self::SESSION_KEY] = [
+            'token' => $token,
+            'created' => time(),
+        ];
 
         return $token;
     }
@@ -37,7 +45,7 @@ class CSRF
      * Validate a CSRF token against the session token
      *
      * @param string $token Token to validate
-     * @return bool True if token matches the session token
+     * @return bool True if token matches the session token and is not expired
      */
     public static function validateToken($token)
     {
@@ -45,7 +53,18 @@ class CSRF
             @session_start();
         }
 
-        if (empty($_SESSION[self::SESSION_KEY])) {
+        $sessionData = $_SESSION[self::SESSION_KEY] ?? null;
+        if (empty($sessionData)) {
+            return false;
+        }
+
+        // Support both old format (string) and new format (array with timestamp)
+        if (is_string($sessionData)) {
+            // Legacy format - just compare tokens
+            return hash_equals($sessionData, $token);
+        }
+
+        if (!is_array($sessionData) || !isset($sessionData['token'], $sessionData['created'])) {
             return false;
         }
 
@@ -53,7 +72,15 @@ class CSRF
             return false;
         }
 
-        return hash_equals($_SESSION[self::SESSION_KEY], $token);
+        // Check token age
+        $age = time() - $sessionData['created'];
+        if ($age > self::TOKEN_MAX_AGE) {
+            // Token expired - remove it
+            unset($_SESSION[self::SESSION_KEY]);
+            return false;
+        }
+
+        return hash_equals($sessionData['token'], $token);
     }
 
     /**

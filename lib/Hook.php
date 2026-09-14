@@ -465,6 +465,7 @@ class Hook
 
     /**
      * Execute URL/webhook hook with SSRF protection and SSL verification
+     * RESTRICTED TO POST METHOD ONLY for security
      */
     private function executeURLHook(array $hook, $jobId, array $context): array
     {
@@ -495,7 +496,7 @@ class Hook
         $ch = curl_init();
         curl_setopt_array($ch, [
             CURLOPT_URL => $url,
-            CURLOPT_POST => true,
+            CURLOPT_POST => true,  // SECURITY: Hardcoded to POST only - no arbitrary methods
             CURLOPT_POSTFIELDS => json_encode($data),
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',

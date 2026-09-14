@@ -15,7 +15,7 @@ if (!defined('RCLONE_VERSION')) {
 }
 
 // Define RCLONE_PATH – prefer bundled binary if present, else fallback to system binary, else empty string
-if (defined('RCLONE_PATH') && RCLONE_PATH) {
+if (defined('RCLONE_PATH') && RCLONE_PATH !== '') {
     // already defined – keep
 } elseif (defined('RCLONE_BINARY') && RCLONE_BINARY) {
     define('RCLONE_PATH', RCLONE_BINARY);

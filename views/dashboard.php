@@ -22,12 +22,14 @@ use CWP\RcloneCWP\Scheduling\CrontabService;
  * @param int $bytes
  * @return string
  */
-function formatBytes($bytes) {
-    if (!$bytes || $bytes === 0) return '0 B';
-    $k = 1024;
-    $sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    $i = floor(log($bytes) / log($k));
-    return round($bytes / pow($k, $i), 2) . ' ' . $sizes[$i];
+if (!function_exists('formatBytes')) {
+    function formatBytes($bytes) {
+        if (!$bytes || $bytes === 0) return '0 B';
+        $k = 1024;
+        $sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $i = (int)floor(log($bytes) / log($k));
+        return round($bytes / pow($k, $i), 2) . ' ' . $sizes[$i];
+    }
 }
 
 /**
@@ -35,13 +37,15 @@ function formatBytes($bytes) {
  * @param string $type
  * @return string
  */
-function getProviderColor($type) {
-    $colors = [
-        'local' => '2e7d32', 's3' => 'e65100', 'gs' => '1565c0', 'azure' => '0277bd',
-        'b2' => 'c2185b', 'sftp' => '512da8', 'ftp' => '7b1fa2', 'webdav' => '00695c',
-        'dropbox' => '0288d1', 'onedrive' => '283593', 'swift' => '4e342e', 'tencent' => '00838f'
-    ];
-    return $colors[$type] ?? '95a5a6';
+if (!function_exists('getProviderColor')) {
+    function getProviderColor($type) {
+        $colors = [
+            'local' => '2e7d32', 's3' => 'e65100', 'gs' => '1565c0', 'azure' => '0277bd',
+            'b2' => 'c2185b', 'sftp' => '512da8', 'ftp' => '7b1fa2', 'webdav' => '00695c',
+            'dropbox' => '0288d1', 'onedrive' => '283593', 'swift' => '4e342e', 'tencent' => '00838f'
+        ];
+        return $colors[$type] ?? '95a5a6';
+    }
 }
 
 $db = Database::getInstance();

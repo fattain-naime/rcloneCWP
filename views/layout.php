@@ -16,7 +16,7 @@ use CWP\RcloneCWP\CSRF;
 $csrfToken = CSRF::generateToken();
 ?>
 
-<div class="container-fluid" style="padding-top: 15px; margin-left: 212px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+<div class="container-fluid rclonecwp-container">
     <!-- Main Panel -->
     <div class="panel panel-default" style="border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
         <!-- Panel Header -->
@@ -113,12 +113,7 @@ $csrfToken = CSRF::generateToken();
                     <?php require __DIR__ . '/destinations.php'; ?>
                 </div>
 
-                <!-- TAB 3: OVERVIEW & STATUS -->
-                <div class="tab-pane" id="tab-overview">
-                    <?php require __DIR__ . '/overview.php'; ?>
-                </div>
-
-                <!-- TAB 4: BACKUP JOBS -->
+                <!-- TAB 3: BACKUP JOBS -->
                 <div class="tab-pane" id="tab-jobs">
                     <?php require __DIR__ . '/backup_jobs.php'; ?>
                 </div>
@@ -173,6 +168,18 @@ $csrfToken = CSRF::generateToken();
 <!-- STYLING ENHANCEMENTS                                                     -->
 <!-- ======================================================================== -->
 <style>
+.rclonecwp-container {
+    padding-top: 15px;
+    margin-left: 212px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+@media (max-width: 991px) {
+    .rclonecwp-container {
+        margin-left: 0 !important;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
 .destinations-view table > tbody > tr > td {
     vertical-align: middle !important;
 }
@@ -429,9 +436,9 @@ $csrfToken = CSRF::generateToken();
                 html += '<td style="text-align: center;"><button type="button" class="btn btn-link btn-xs btn-toggle-dest" data-id="' + d.id + '" data-enabled="' + (d.enabled ? 1 : 0) + '" style="padding:0; text-decoration:none;">' + statusHtml + '</button></td>';
                 html += '<td>' + testBadge + '</td>';
                 html += '<td style="text-align: right;" class="btn-action-group">';
-                html += '<button type="button" class="btn btn-info btn-xs btn-test-dest" data-id="' + d.id + '" title="Test Connection"><i class="fa fa-bolt"></i> Test</button> ';
-                html += '<button type="button" class="btn btn-default btn-xs btn-edit-dest" data-id="' + d.id + '" title="Edit Destination"><i class="fa fa-pencil"></i> Edit</button> ';
-                html += '<button type="button" class="btn btn-danger btn-xs btn-delete-dest" data-id="' + d.id + '" data-name="' + selfEscape(d.name) + '" title="Delete Destination"><i class="fa fa-trash"></i></button>';
+                html += '<button type="button" class="btn btn-info btn-xs btn-test-dest" data-id="' + d.id + '" title="Test Connection" aria-label="Test Connection"><i class="fa fa-bolt"></i> Test</button> ';
+                html += '<button type="button" class="btn btn-default btn-xs btn-edit-dest" data-id="' + d.id + '" title="Edit Destination" aria-label="Edit Destination"><i class="fa fa-pencil"></i> Edit</button> ';
+                html += '<button type="button" class="btn btn-danger btn-xs btn-delete-dest" data-id="' + d.id + '" data-name="' + selfEscape(d.name) + '" title="Delete Destination" aria-label="Delete Destination"><i class="fa fa-trash"></i></button>';
                 html += '</td>';
                 html += '</tr>';
             }

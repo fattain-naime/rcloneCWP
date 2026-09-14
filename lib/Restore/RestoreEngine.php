@@ -547,6 +547,19 @@ class RestoreEngine
             return;
         }
 
-        exec('rm -rf ' . escapeshellarg($real));
+        // Pure PHP recursive delete - safer than exec('rm -rf')
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($real, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($files as $file) {
+            if ($file->isDir()) {
+                @rmdir($file->getPathname());
+            } else {
+                @unlink($file->getPathname());
+            }
+        }
+        @rmdir($real);
     }
 }

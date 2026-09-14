@@ -155,7 +155,7 @@ class Database
      * @param string $table Table name (whitelisted)
      * @param array $data Column => value pairs
      * @return int Last insert ID
-     * @throws \InvalidArgumentException if table not whitelisted
+     * @throws \InvalidArgumentException if table not whitelisted or column names invalid
      */
     public function insert($table, array $data)
     {
@@ -167,6 +167,13 @@ class Database
 
         if (!in_array($table, $allowedTables, true)) {
             throw new \InvalidArgumentException("Table not whitelisted: $table");
+        }
+
+        // Validate column names - only alphanumeric and underscore
+        foreach (array_keys($data) as $column) {
+            if (!preg_match('/^[a-zA-Z0-9_]+$/', $column)) {
+                throw new \InvalidArgumentException("Invalid column name: $column");
+            }
         }
 
         $columns = array_keys($data);
@@ -187,7 +194,7 @@ class Database
      * @param string $where WHERE clause with placeholders
      * @param array $whereParams Parameters for WHERE clause
      * @return int Number of affected rows
-     * @throws \InvalidArgumentException if table not whitelisted
+     * @throws \InvalidArgumentException if table not whitelisted or column names invalid
      */
     public function update($table, array $data, $where, array $whereParams = [])
     {
@@ -199,6 +206,13 @@ class Database
 
         if (!in_array($table, $allowedTables, true)) {
             throw new \InvalidArgumentException("Table not whitelisted: $table");
+        }
+
+        // Validate column names - only alphanumeric and underscore
+        foreach (array_keys($data) as $column) {
+            if (!preg_match('/^[a-zA-Z0-9_]+$/', $column)) {
+                throw new \InvalidArgumentException("Invalid column name: $column");
+            }
         }
 
         $setClauses = [];

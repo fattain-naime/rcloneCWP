@@ -415,16 +415,16 @@ $csrfToken = \CWP\RcloneCWP\CSRF::generateToken();
                         '<td>' + nextRunHtml + '</td>' +
                         '<td>' + lastRunHtml + '</td>' +
                         '<td class="text-center">' +
-                            '<button class="btn btn-xs btn-success btn-run-now" data-id="' + s.id + '" data-jobid="' + s.job_id + '" title="Run Job Now">' +
+                            '<button class="btn btn-xs btn-success btn-run-now" data-id="' + s.id + '" data-jobid="' + s.job_id + '" title="Run Job Now" aria-label="Run Job Now">' +
                                 '<i class="fa fa-play"></i>' +
                             '</button> ' +
-                            '<button class="btn btn-xs ' + (s.active ? 'btn-warning' : 'btn-info') + ' btn-toggle-active" data-id="' + s.id + '" data-active="' + (s.active ? 1 : 0) + '" title="' + (s.active ? 'Pause Schedule' : 'Resume Schedule') + '">' +
+                            '<button class="btn btn-xs ' + (s.active ? 'btn-warning' : 'btn-info') + ' btn-toggle-active" data-id="' + s.id + '" data-active="' + (s.active ? 1 : 0) + '" title="' + (s.active ? 'Pause Schedule' : 'Resume Schedule') + '" aria-label="' + (s.active ? 'Pause Schedule' : 'Resume Schedule') + '">' +
                                 '<i class="fa fa-' + (s.active ? 'pause' : 'play') + '"></i>' +
                             '</button> ' +
-                            '<button class="btn btn-xs btn-default btn-edit-schedule" data-id="' + s.id + '" title="Edit Schedule">' +
+                            '<button class="btn btn-xs btn-default btn-edit-schedule" data-id="' + s.id + '" title="Edit Schedule" aria-label="Edit Schedule">' +
                                 '<i class="fa fa-pencil"></i>' +
                             '</button> ' +
-                            '<button class="btn btn-xs btn-danger btn-delete-schedule" data-id="' + s.id + '" title="Delete Schedule">' +
+                            '<button class="btn btn-xs btn-danger btn-delete-schedule" data-id="' + s.id + '" title="Delete Schedule" aria-label="Delete Schedule">' +
                                 '<i class="fa fa-trash"></i>' +
                             '</button>' +
                         '</td>' +
