@@ -112,7 +112,7 @@ Tests are in `tests/unit/` and `tests/` (root). Add tests for new functionality 
 
 ## Security
 
-If you discover a security vulnerability, please do **not** open a public issue. Instead, see our [Security Policy](SECURITY.md) for responsible disclosure instructions.
+If you discover a security vulnerability, please do **not** open a public issue. Instead, see our [Security Policy](https://github.com/fattain-naime/rcloneCWP?tab=security-ov-file) for responsible disclosure instructions.
 
 ## License
 
