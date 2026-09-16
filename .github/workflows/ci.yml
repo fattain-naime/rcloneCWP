@@ -49,4 +49,4 @@ jobs:
       - name: Composer validate
         run: composer validate --strict
       - name: Run security audit
-        run: composer audit --no-progress
+        run: composer audit
